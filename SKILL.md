@@ -199,8 +199,6 @@
 ### Table 表格
 
 - **啟用欄：** 使用 `<Switch size="small" />`，即時反映啟用狀態
-- **刪除欄：** 使用 `<DeleteOutlined />` 圖示 + 「刪除」文字
-- 不可用「停用」文字代替「刪除」
 
 ---
 
@@ -224,7 +222,6 @@
 | 頁面主要操作 | Radio.Button 樣式 | Button Primary |
 | 多選一（會員等級） | Switch 輪流切換 | Radio Group |
 | 狀態顯示 | 純文字 | Tag 元件 |
-| 刪除操作按鈕 | 「停用」文字 | `DeleteOutlined` + 「刪除」 |
 
 ---
 
