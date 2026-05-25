@@ -1225,7 +1225,31 @@ function App() {
                 h(Col, { span: 8 },
                   h(Card, { title: h(Space, null, h(SettingOutlined), '前端工程師'), styles: { header: { background: '#e6f8ff', borderBottom: '1px solid #94dbff' } }, style: { height: '100%' } },
                     h(Space, { direction: 'vertical', size: 12, style: { width: '100%' } },
-                      h(Paragraph, { style: { fontSize: 13, margin: 0 } }, '複製 echossTheme 到專案的 src/theme/echoss-theme.ts，在 App.tsx 最外層包上 ConfigProvider 即可全局套用品牌色。'),
+                      h(Text, { type: 'secondary', style: { fontSize: 12, display: 'block' } }, '接手 Ant Design Pro 專案步驟'),
+                      h(Steps, {
+                        direction: 'vertical',
+                        size: 'small',
+                        current: -1,
+                        style: { marginTop: 4 },
+                        items: [
+                          {
+                            title: h(Text, { style: { fontSize: 12, fontWeight: 600 } }, '套用 ConfigProvider'),
+                            description: h(Text, { type: 'secondary', style: { fontSize: 11 } }, '在 src/app.tsx 的 rootContainer 加入 echossTheme，全站元件自動套用品牌色。'),
+                          },
+                          {
+                            title: h(Text, { style: { fontSize: 12, fontWeight: 600 } }, '覆蓋 ProLayout 主色'),
+                            description: h(Text, { type: 'secondary', style: { fontSize: 11 } }, '在 config/defaultSettings.ts 補上 colorPrimary: \'#07C373\'，否則側邊欄選中狀態仍為預設藍色。'),
+                          },
+                          {
+                            title: h(Text, { style: { fontSize: 12, fontWeight: 600 } }, '載入 Noto Sans TC'),
+                            description: h(Text, { type: 'secondary', style: { fontSize: 11 } }, '在 src/global.css 引入 Google Fonts，確保全站字型與規範一致。'),
+                          },
+                          {
+                            title: h(Text, { style: { fontSize: 12, fontWeight: 600 } }, '驗收對照展示頁'),
+                            description: h(Text, { type: 'secondary', style: { fontSize: 11 } }, '開啟 GitHub Pages 展示頁，逐一確認主色、Button、Tag、Switch、Form、Layout Sider 外觀是否一致。'),
+                          },
+                        ],
+                      }),
                       h(Divider, { style: { margin: '4px 0' } }),
                       h(Text, { type: 'secondary', style: { fontSize: 12 } }, '參照位置'),
                       h(Tag, { color: 'default' }, 'SKILL.md → ConfigProvider 設定'),
