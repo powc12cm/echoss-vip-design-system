@@ -1,3 +1,12 @@
+---
+name: echoss-vip-design-system
+description: >
+  Echoss VIP 開發團隊 UI 設計系統規範，基於 Ant Design v5。
+  包含 Design Token、Color Palette、元件使用規範（Button、Tag、Switch、Radio、Form、Table）、
+  ConfigProvider echossTheme 設定、Claude Prompt 模板。
+  使用時機：任何涉及 Echoss VIP 後台 UI 的 Prototype 製作、元件選用、前端實作確認。
+---
+
 # Echoss VIP Design System — SKILL
 
 > 本文件為 Echoss VIP 開發團隊的 UI 設計系統規範，供 PM、前端工程師、設計師在 Claude 上共用。
