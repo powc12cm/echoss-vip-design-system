@@ -1,24 +1,25 @@
 ---
 name: echoss-vip-design-system
 description: >
-  Echoss VIP 開發團隊 UI 設計系統規範，基於 Ant Design v5。
+  Echoss VIP 開發團隊 UI 設計系統規範，基於 Ant Design v5 與 @ant-design/pro-components。
   包含 Design Token、Color Palette、元件使用規範（Button、Tag、Switch、Radio、Form、Table）、
+  應用框架 Layout（ProLayout layout="mix"：Header + Sider 實測參數）、
   ConfigProvider echossTheme 設定、Claude Prompt 模板。
-  使用時機：任何涉及 Echoss VIP 後台 UI 的 Prototype 製作、元件選用、前端實作確認。
+  使用時機：任何涉及 Echoss VIP 後台 UI 的 Prototype 製作、Layout 框架、元件選用、前端實作確認。
 ---
 
 # Echoss VIP Design System — SKILL
 
 > 本文件為 Echoss VIP 開發團隊的 UI 設計系統規範，供 PM、前端工程師、設計師在 Claude 上共用。
-> 維護者：設計端（powchuang）｜最後更新：2026-07-06｜版本：v1.1
+> 維護者：設計端（powchuang）｜最後更新：2026-08-12｜版本：v1.2
 
 ---
 
 ## 使用說明
 
-**PM 製作 Prototype 時**，在 Claude 新對話的第一句話貼上「Claude Prompt 模板」章節的內容，Claude 就會以 Echoss VIP 規範輸出。
+**PM 製作 Prototype 時**，在 Claude 新對話的第一句話貼上「Claude Prompt 模板」章節的內容，Claude 就會以 Echoss VIP 規範輸出。需要完整後台框架時，直接附上 `references/layout-shell.html`。
 
-**前端工程師**，參照「ConfigProvider 設定」章節複製 `echossTheme` 到專案中套用。
+**前端工程師**，參照「ConfigProvider 設定」章節複製 `echossTheme`，並依「應用框架 Layout」章節套用 ProLayout。
 
 **設計師維護更新**，直接編輯此檔案後推送到 GitHub，團隊下次使用即取得最新版本。
 
@@ -38,9 +39,12 @@ description: >
 | `colorWarning` | `#FCB321` | 警示狀態、Warning Alert |
 | `colorError` | `#FF4D4F` | 錯誤、Danger Button、Error Alert |
 | `colorInfo` | `#1A9CFF` | 資訊提示、Info Alert |
-| `colorBgLayout` | `#F8F9FA` | 頁面整體背景 Layout |
+| `colorBgLayout` | `#F5F5F5` | 頁面底色基準（**實測值**，見下方註） |
 | `colorBorder` | `#D9D9D9` | 通用邊框色 |
+| `colorSplit` | `#f0f0f0` | 分隔線（sider 右緣、header 下緣、tabs、卡片） |
 | `colorTextTertiary` | `#8c8c8c` | 次要／停用文字、不可點操作連結 |
+
+> **底色實測註（v1.2 修正）：** 後台實測 `header / sider / content` 三者背景皆為 **透明**，實際底色來自 `body` 的漸層 `linear-gradient(#ffffff, #f5f5f5 28%)`（固定不隨捲動）。因此 `colorBgLayout` 由舊值 `#F8F9FA` 更新為 `#F5F5F5`（漸層終點色），並在「應用框架 Layout」章節說明漸層與透明的用法。舊 token `#F8F9FA` 不再使用。
 
 ### 字型 Typography
 
@@ -256,7 +260,143 @@ description: >
 
 ---
 
-## 四、ConfigProvider 設定
+## 四、應用框架 Layout（ProLayout）
+
+後台整體框架使用 **`@ant-design/pro-components` 的 `ProLayout`**，佈局類型為 **`layout="mix"`**。以下數值皆自 stage 後台 `/permission/account` 實測後鎖定。完整可貼的 HTML 骨架見 **`references/layout-shell.html`**。
+
+### 4.1 結構判定（mix）
+
+實測幾何：`header {x:256, y:0, w:1256, h:56}`、`sider {x:0, y:56, w:256}` —— header 是**全寬帶**、選單 sider 在其**下方**才開始。
+
+```
+┌───────────── Header（全寬 56，透明，下緣 1px 全寬線）─────────────┐
+│  [logo 區 256：logo 28 + Echoss VIP]  │  actions：語系切換 / 使用者 / stage │
+├───────────────┬──────────────────────────────────────────────────┤
+│  Sider 256    │                                                    │
+│  （透明、右緣  │   Content（透明，padding 8/40/16/40）              │
+│   1px 分隔線） │   PageTitle → Tabs → 白色 Card…                    │
+└───────────────┴──────────────────────────────────────────────────┘
+     底色：body linear-gradient(#ffffff, #f5f5f5 28%) fixed
+```
+
+> ⚠️ 是 **mix** 不是 side：side 會把 sider 右緣線一路畫到頂端、在 logo 與 header 之間多一條直線；mix 的頂端帶是連續的，sider 分隔線只在 `y≥56` 出現。
+
+### 4.2 ProLayout Props 對照
+
+| 區塊 | ProLayout API | 值 / 說明 |
+|---|---|---|
+| 佈局 | `layout` | `"mix"` |
+| 主題 | `navTheme` | `"light"` |
+| 固定側欄 | `fixSiderbar` | `true` |
+| 側欄寬 | `siderWidth` | `256` |
+| 品牌 | `title` / `logo` | `Echoss VIP` / `https://brand.echoss.vip/logo-circle.svg` |
+| 選單 | `menuItemRender` / `route.routes` | 見 4.4 icon 對應 |
+| 收合鈕 | `collapsedButtonRender` | sider 右上緣圓鈕 |
+| Header 右側 | `rightContentRender` / `actionsRender` | 語系切換 Select、`stage` Tag |
+| 使用者 | `avatarProps` | `src` logo、`size:22`、名稱 `vipcafeadmin`、副標 `（品牌管理員）` |
+
+### 4.3 實測參數表（定案值）
+
+| 項目 | 值 |
+|---|---|
+| body 底色 | `linear-gradient(#ffffff, #f5f5f5 28%)`（`fixed`） |
+| header / sider / content 背景 | `transparent` |
+| 分隔線色 | `#f0f0f0`（header 下緣、sider 右緣） |
+| headerHeight | `56` |
+| header logo 區寬 | `256`（padding `0 16`；logo `28×28`；title 17px/700） |
+| header actions padding（headerPadX） | `0 16`；item gap `20` |
+| 語系切換 Select | 高 36、border `1px #D9D9D9`、radius 6、min-width 150、placeholder 文字 `rgba(0,0,0,.25)` |
+| 使用者頭像 avatar | `22×22`、圓形、背景 `#fff` |
+| 名稱 / 副標 | `14/600` / `12` `#8c8c8c` |
+| env badge（stage） | 背景 `colorPrimary`、`#fff`、`12/500`、padding `5px 7px`、radius 4 |
+| siderWidth | `256`（透明、右緣 `1px #f0f0f0`） |
+| collapse-btn | `26×26`、`top:20 / right:-13`、圓形、`font-size:20`、`align-items:flex-end` |
+| 選單 `.pro-menu` padding | `0 8`（僅左右 8） |
+| 選單項 item | 高 `40`、padding `0 16`、radius `6`、icon 與文字 gap `8` |
+| 選單 icon | `14px` |
+| 選單項文字色 | `rgba(0,0,0,.65)` |
+| 選中態 | 背景 `rgba(0,0,0,.04)`、文字 `rgba(0,0,0,.95)`、`font-weight 600`（中性灰底深字，非品牌綠底） |
+| content padding | 上 `8` / 右 `40` / 下 `16` / 左 `40` |
+| page-title | `20/700`、`padding-top:8`、`margin:0 0 16` |
+| Tabs | active 品牌綠 + 底部 `2px` 綠線；分隔線 `#f0f0f0` |
+| Card | 白底、radius `6`、shadow `0 1px 3px rgba(0,0,0,.06)` |
+
+### 4.4 選單 icon 對應（含 iconfont）
+
+多數為 `@ant-design/icons`，「帳號管理」為自訂 iconfont symbol（需在 ConfigProvider/ProLayout 掛 `iconfontUrl`）。
+
+| 選單 | 圖示來源 | 名稱 / data-icon |
+|---|---|---|
+| 功能模組 | @ant-design/icons | `AppstoreOutlined`（`appstore`） |
+| 會員分析 | @ant-design/icons | `DashboardOutlined`（`dashboard`） |
+| 會員資料 | @ant-design/icons | `UserOutlined`（`user`） |
+| **帳號管理** | **iconfont** | **`#icon-icon-assignpermissions`**（盾牌，viewBox `0 0 1024 1024`） |
+| 門市管理 | @ant-design/icons | `PartitionOutlined`（`partition`） |
+| 系統設定 | @ant-design/icons | `LayoutOutlined`（`layout`） |
+| 下載區 | @ant-design/icons | `CloudDownloadOutlined`（`cloud-download`） |
+| 使用手冊 | @ant-design/icons | `FileOutlined`（`file`） |
+
+### 4.5 React ProLayout 骨架（可貼）
+
+```tsx
+import ProLayout from '@ant-design/pro-components';
+import {
+  AppstoreOutlined, DashboardOutlined, UserOutlined, PartitionOutlined,
+  LayoutOutlined, CloudDownloadOutlined, FileOutlined, createFromIconfontCN,
+} from '@ant-design/icons';
+
+// 自訂 iconfont（帳號管理等自繪圖示）
+const IconFont = createFromIconfontCN({ scriptUrl: '<你的 iconfont.js URL>' });
+
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <ProLayout
+      layout="mix"
+      navTheme="light"
+      fixSiderbar
+      siderWidth={256}
+      title="Echoss VIP"
+      logo="https://brand.echoss.vip/logo-circle.svg"
+      token={{
+        header: { colorBgHeader: 'transparent', heightLayoutHeader: 56 },
+        sider: {
+          colorMenuBackground: 'transparent',
+          colorBgMenuItemSelected: 'rgba(0,0,0,0.04)',
+          colorTextMenuSelected: 'rgba(0,0,0,0.95)',
+        },
+        pageContainer: { paddingBlockPageContainerContent: 8, paddingInlinePageContainerContent: 40 },
+      }}
+      route={{ routes: [
+        { path: '/features',   name: '功能模組', icon: <AppstoreOutlined /> },
+        { path: '/analysis',   name: '會員分析', icon: <DashboardOutlined /> },
+        { path: '/member',     name: '會員資料', icon: <UserOutlined /> },
+        { path: '/permission', name: '帳號管理', icon: <IconFont type="icon-icon-assignpermissions" /> },
+        { path: '/store',      name: '門市管理', icon: <PartitionOutlined /> },
+        { path: '/system',     name: '系統設定', icon: <LayoutOutlined /> },
+        { path: '/download',   name: '下載區',   icon: <CloudDownloadOutlined /> },
+        { path: '/manual',     name: '使用手冊', icon: <FileOutlined /> },
+      ]}}
+      avatarProps={{ src: 'https://brand.echoss.vip/logo-circle.svg', size: 22, title: 'vipcafeadmin' }}
+      actionsRender={() => [
+        /* 語系切換 <Select placeholder="語系切換" /> */,
+        /* <Tag color="#07C373">stage</Tag> */,
+      ]}
+    >
+      {children}
+    </ProLayout>
+  );
+}
+```
+
+全域底色（放在 `body` 或最外層容器，非 antd token 可表達）：
+
+```css
+body { background: linear-gradient(#ffffff, #f5f5f5 28%) fixed; }
+```
+
+---
+
+## 五、ConfigProvider 設定
 
 前端工程師將以下內容存為 `src/theme/echoss-theme.ts`，在 `App.tsx` 最外層包上 `<ConfigProvider>` 即可全局套用 Echoss VIP 品牌色。
 
@@ -272,9 +412,10 @@ export const echossTheme = {
     colorError: '#FF4D4F',
     colorInfo: '#1A9CFF',
 
-    // 背景與邊框
-    colorBgLayout: '#F8F9FA',
+    // 背景與邊框（v1.2：底色實測為漸層，colorBgLayout 取終點色）
+    colorBgLayout: '#F5F5F5',
     colorBorder: '#D9D9D9',
+    colorSplit: '#f0f0f0',
 
     // 字型
     fontFamily: "'Noto Sans TC', sans-serif",
@@ -292,8 +433,9 @@ export const echossTheme = {
   },
   components: {
     Layout: {
-      siderBg: '#fff',
-      headerBg: '#fff',
+      // v1.2 實測：header / sider 皆透明，底色由 body 漸層透出
+      siderBg: 'transparent',
+      headerBg: 'transparent',
     },
   },
 };
@@ -313,9 +455,11 @@ export default function App() {
 }
 ```
 
+> 全域底色 `linear-gradient(#ffffff, #f5f5f5 28%)` 無法用單一 token 表達，請在 `body`／最外層容器以 CSS 設定（見 §4.5）。
+
 ---
 
-## 五、Claude Prompt 模板
+## 六、Claude Prompt 模板
 
 PM 在 Claude.ai 開新對話時，將以下內容**整段複製**貼在第一句話，Claude 就會以 Echoss VIP 規範輸出所有 Prototype。
 
@@ -324,14 +468,24 @@ PM 在 Claude.ai 開新對話時，將以下內容**整段複製**貼在第一�
 
 請參照以下規範輸出所有 UI：
 
+【應用框架 Layout（@ant-design/pro-components）】
+- 使用 ProLayout，layout="mix"、navTheme="light"、fixSiderbar、siderWidth=256
+- 全寬 Header（左 logo 區 256「Echoss VIP」+ 右側 actions：語系切換 Select、stage Tag、使用者 vipcafeadmin/（品牌管理員）頭像 22px）
+- 下方左側 Sider 選單、右側 Content
+- 底色：body linear-gradient(#ffffff, #f5f5f5 28%)；header/sider/content 皆透明
+- 分隔線 #f0f0f0：header 下緣（全寬）、sider 右緣（y≥56）
+- 選單 item 高 40、padding 0 16、radius 6、icon 14px；選中態灰底深字 bg rgba(0,0,0,.04)/color rgba(0,0,0,.95)
+- content padding 上8/右40/下16/左40；page-title padding-top 8
+- 選單 icon：功能模組 AppstoreOutlined、會員分析 DashboardOutlined、會員資料 UserOutlined、帳號管理 iconfont #icon-icon-assignpermissions、門市管理 PartitionOutlined、系統設定 LayoutOutlined、下載區 CloudDownloadOutlined、使用手冊 FileOutlined
+
 【品牌色碼（必須使用）】
 - Primary: #07C373（品牌綠）
 - Link: #1BAA6D
 - Warning: #FCB321
 - Error: #FF4D4F
 - Info: #1A9CFF
-- Background Layout: #F8F9FA
-- Border: #D9D9D9
+- Background Layout: #F5F5F5（body 漸層終點）
+- Border: #D9D9D9 / Split: #f0f0f0
 - Font: Noto Sans TC, sans-serif
 
 【元件規範（antd v5）】
@@ -347,7 +501,7 @@ PM 在 Claude.ai 開新對話時，將以下內容**整段複製**貼在第一�
 - Table 操作欄 → 依操作連結 taxonomy 上色：主要/導覽（編輯、詳情、內容連結）=品牌綠 #07C373；次級動作（新增、匯入、匯出、產生）=品牌黃 #FCB321；破壞性（刪除、作廢、撤銷）=品牌紅 #FF4D4F；停用=灰階不可點 #8c8c8c。列表內連結預設品牌綠、不用藍色；多個操作以「|」分隔。個別模組語意特殊的操作依實際語意歸類（如序號模組「收回」為可還原動作，歸次級=黃）
 
 【輸出要求】
-- 使用 antd v5 官方 React 元件
+- 使用 antd v5 + @ant-design/pro-components 官方元件
 - 套用 ConfigProvider + echossTheme
 - 字型使用 Noto Sans TC
 - 狀態顯示一律用 Tag 元件，不用純文字
@@ -355,7 +509,28 @@ PM 在 Claude.ai 開新對話時，將以下內容**整段複製**貼在第一�
 
 ---
 
-## 六、版本紀錄
+## 七、版本紀錄
+
+### v1.2 — 2026-08-12
+
+**新增「應用框架 Layout（ProLayout）」章節**
+- 判定後台為 ProLayout `layout="mix"`，附結構圖與 side/mix 差異說明
+- 加入 ProLayout props 對照表、實測參數表（header 56 / sider 256 / 選單 / 選中態 / content padding 等全數鎖定值）
+- 選單 icon 對應表（含帳號管理 iconfont `#icon-icon-assignpermissions`）
+- React `<ProLayout>` 可貼骨架；完整 HTML 見 `references/layout-shell.html`
+
+**底色 token 修正**
+- 實測 header/sider/content 皆透明、底色來自 `body` 漸層 `linear-gradient(#ffffff, #f5f5f5 28%)`
+- `colorBgLayout` 由 `#F8F9FA` 更新為 `#F5F5F5`（漸層終點色）；`components.Layout` 的 `siderBg/headerBg` 改 `transparent`
+- 新增 `colorSplit` `#f0f0f0` token（分隔線）
+
+**同步更新** ConfigProvider 與 Claude Prompt 模板（加入 Layout 指示）
+
+**驗證：** 以 Claude in Chrome 直接讀取 stage 後台 `/permission/account` DOM 與 computed style 校準
+
+**貢獻者：** powchuang（設計端）
+
+---
 
 ### v1.1 — 2026-07-06
 
