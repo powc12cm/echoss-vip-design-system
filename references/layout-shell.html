@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Echoss VIP — Layout（ProLayout mix）v5</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* =========================================================================
+     Echoss VIP — Layout（ProLayout layout="mix"，以 stage 後台實測值鎖定）
+     實測幾何：header {x:256,y:0,w:1256,h:56} + logo 區(左 256×56)
+               sider {x:0,y:56,w:256}  → 選單在 header 帶下方
+     ▸ 全站白底（body/layout/sider/header/content 皆透明→白）
+     ▸ header 帶下緣 1px 全寬線；sider 右緣 1px 線（僅 y≥56）
+     ▸ header actions padding 0 50 / logo 區寬 256
+     ▸ menu 240（sider 內縮 8）/ item 40 高、padding 0 16、radius 6
+     ▸ 選中 bg rgba(0,0,0,.04) + color rgba(0,0,0,.95) / icon 14 / font Noto Sans TC 14
+     ========================================================================= */
+    :root {
+      --colorPrimary: #07C373;
+      --colorLink: #1BAA6D;
+      --colorWarning: #FCB321;
+      --colorError: #FF4D4F;
+      --colorInfo: #1A9CFF;
+      --pageBg: #f5f5f5;
+      --colorBgContainer: #ffffff;
+      --colorBorder: #D9D9D9;
+      --colorSplit: #f0f0f0;
+      --colorText: rgba(0, 0, 0, 0.88);
+      --colorTextSecondary: rgba(0, 0, 0, 0.65);
+      --colorTextTertiary: #8c8c8c;
+      --colorTextPlaceholder: rgba(0, 0, 0, 0.25);
+      --colorMenuSelBg: rgba(0, 0, 0, 0.04);
+      --colorMenuSelText: rgba(0, 0, 0, 0.95);
+      --fontFamily: 'Noto Sans TC', sans-serif;
+
+      --headerHeight: 56px;
+      --headerPadX: 16px;
+      --siderWidth: 256px;
+      --siderCollapsedWidth: 64px;
+      --menuGutter: 8px;
+      --menuItemHeight: 40px;
+      --iconSize: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--fontFamily);
+      font-size: 14px;
+      color: var(--colorText);
+      background: linear-gradient(#ffffff, #f5f5f5 28%) fixed;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* <Layout>(垂直) ── Header(全寬) + <Layout hasSider>(Sider + Content) */
+    .pro-layout {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: transparent;
+    }
+
+    /* ---------- Header（全寬帶，白底，下緣全寬線）---------- */
+    .pro-header {
+      height: var(--headerHeight);
+      flex: 0 0 auto;
+      display: flex;
+      align-items: stretch;
+      background: transparent;
+      border-bottom: 1px solid var(--colorSplit);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    /* 左側 logo 區：寬度對齊 sider（256），與下方選單同欄 */
+    .pro-header__logo {
+      width: var(--siderWidth);
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      transition: width .2s;
+    }
+
+    .pro-header__logo img {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 auto;
+      display: block;
+    }
+
+    .pro-header__logo .logo-fallback {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      background: #1f1f1f;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .pro-header__logo .title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--colorText);
+      white-space: nowrap;
+      letter-spacing: .2px;
+    }
+
+    /* 右側 actions 區 */
+    .pro-header__actions {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 20px;
+      padding: 0 var(--headerPadX);
+    }
+
+    .lang-select {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--colorBorder);
+      border-radius: 6px;
+      color: var(--colorTextPlaceholder);
+      font-size: 14px;
+      cursor: pointer;
+      min-width: 150px;
+      justify-content: space-between;
+      background: #fff;
+    }
+
+    .lang-select .chev {
+      color: var(--colorTextTertiary);
+      font-size: 12px;
+    }
+
+    .user-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .user-block .avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #fff;
+    }
+
+    .user-block .meta {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .user-block .meta .name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--colorText);
+    }
+
+    .user-block .meta .role {
+      font-size: 12px;
+      color: var(--colorTextTertiary);
+    }
+
+    .env-badge {
+      background: var(--colorPrimary);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1;
+      padding: 5px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    /* ---------- Body：Sider + Content ---------- */
+    .pro-body {
+      display: flex;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    /* Sider：白底、右緣分隔線（在 header 帶下方，y≥56） */
+    .pro-sider {
+      position: relative;
+      width: var(--siderWidth);
+      flex: 0 0 auto;
+      background: transparent;
+      border-right: 1px solid var(--colorSplit);
+      display: flex;
+      flex-direction: column;
+      transition: width .2s;
+    }
+
+    /* 收合鈕：sider 右上緣、壓在分隔線上 */
+    .collapse-btn {
+      position: absolute;
+      top: 20px;
+      right: -13px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid var(--colorSplit);
+      box-shadow: 0 2px 6px rgba(0, 21, 41, .08);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--colorTextTertiary);
+      font-size: 20px;
+      z-index: 11;
+      transition: transform .2s;
+    }
+
+    .pro-menu {
+      list-style: none;
+      margin: 0;
+      padding: 0 var(--menuGutter);
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .pro-menu li {
+      margin: 4px;
+    }
+
+    .pro-menu a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: var(--menuItemHeight);
+      padding: 0 16px;
+      border-radius: 6px;
+      color: var(--colorTextSecondary);
+      text-decoration: none;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: background .2s, color .2s;
+    }
+
+    .pro-menu a .icon {
+      width: var(--iconSize);
+      height: var(--iconSize);
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pro-menu a .icon svg {
+      width: var(--iconSize);
+      height: var(--iconSize);
+      fill: currentColor;
+    }
+
+    .pro-menu a .label {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pro-menu a:hover {
+      background: rgba(0, 0, 0, .04);
+      color: var(--colorText);
+    }
+
+    .pro-menu li.selected a {
+      background: var(--colorMenuSelBg);
+      color: var(--colorMenuSelText);
+      font-weight: 600;
+    }
+
+    /* Content：白底 */
+    .pro-content {
+      flex: 1 1 auto;
+      min-width: 0;
+      background: transparent;
+      padding-block-start: 8px;
+      padding-block-end: 16px;
+      padding-inline-start: 40px;
+      padding-inline-end: 40px;
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 16px;
+      padding-top: 8px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 28px;
+      border-bottom: 1px solid var(--colorSplit);
+      margin-bottom: 16px;
+    }
+
+    .tabs .tab {
+      padding: 8px 0;
+      color: var(--colorTextSecondary);
+      cursor: pointer;
+      position: relative;
+      font-size: 14px;
+    }
+
+    .tabs .tab.active {
+      color: var(--colorPrimary);
+      font-weight: 600;
+    }
+
+    .tabs .tab.active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: var(--colorPrimary);
+    }
+
+    .card {
+      background: var(--colorBgContainer);
+      border-radius: 6px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 220px;
+    }
+
+    .filter-item label {
+      font-size: 14px;
+      color: var(--colorText);
+    }
+
+    .filter-item .fake-input {
+      height: 40px;
+      border: 1px solid var(--colorBorder);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding: 0 11px;
+      color: var(--colorTextPlaceholder);
+      background: #fff;
+    }
+
+    .filter-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      height: 40px;
+      padding: 0 16px;
+      border-radius: 6px;
+      border: 1px solid var(--colorBorder);
+      background: #fff;
+      color: var(--colorText);
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn.primary {
+      background: var(--colorPrimary);
+      border-color: var(--colorPrimary);
+      color: #fff;
+    }
+
+    .content-note {
+      color: var(--colorTextTertiary);
+      font-size: 13px;
+    }
+
+    /* collapsed */
+    body.collapsed {
+      --siderWidth: var(--siderCollapsedWidth);
+    }
+
+    body.collapsed .pro-header__logo .title {
+      display: none;
+    }
+
+    body.collapsed .pro-header__logo {
+      justify-content: center;
+      padding: 0;
+    }
+
+    body.collapsed .pro-menu a {
+      justify-content: center;
+      padding: 0;
+    }
+
+    body.collapsed .pro-menu a .label {
+      display: none;
+    }
+
+    body.collapsed .collapse-btn {
+      transform: rotate(180deg);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="pro-layout">
+
+    <!-- ===================== HEADER（全寬帶：logo 區 + actions）===================== -->
+    <header class="pro-header">
+      <div class="pro-header__logo">
+        <img src="https://brand.echoss.vip/logo-circle.svg" alt="Echoss VIP"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+        <span class="logo-fallback">E</span>
+        <span class="title">Echoss VIP</span>
+      </div>
+      <div class="pro-header__actions">
+        <div class="lang-select"><span>語系切換</span><span class="chev">▾</span></div>
+        <div class="user-block">
+          <img class="avatar" src="https://brand.echoss.vip/logo-circle.svg"
+            onerror="this.style.background='#1f1f1f';this.removeAttribute('src');" alt="avatar" />
+          <div class="meta"><span class="name">vipcafeadmin</span><span class="role">（品牌管理員）</span></div>
+        </div>
+        <span class="env-badge">stage</span>
+      </div>
+    </header>
+
+    <!-- ===================== BODY：Sider + Content ===================== -->
+    <div class="pro-body">
+      <aside class="pro-sider">
+        <div class="collapse-btn" onclick="document.body.classList.toggle('collapsed')" title="收合/展開">‹</div>
+        <ul class="pro-menu">
+          <!-- 功能模組 · AppstoreOutlined -->
+          <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896">
+                  <path
+                    d="M464 144H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H212V212h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H612V212h200v200zM464 544H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H212V612h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H612V612h200v200z" />
+                </svg></span><span class="label">功能模組</span></a></li>
+          <!-- 會員分析 · DashboardOutlined -->
+          <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896">
+                  <path
+                    d="M924.8 385.6a446.7 446.7 0 00-96-142.4 446.7 446.7 0 00-142.4-96C631.1 123.8 572.5 112 512 112s-119.1 11.8-174.4 35.2a446.7 446.7 0 00-142.4 96 446.7 446.7 0 00-96 142.4C75.8 440.9 64 499.5 64 560c0 132.7 58.3 257.7 159.9 343.1l1.7 1.4c5.8 4.8 13.1 7.5 20.6 7.5h531.7c7.5 0 14.8-2.7 20.6-7.5l1.7-1.4C901.7 817.7 960 692.7 960 560c0-60.5-11.9-119.1-35.2-174.4zM761.4 836H262.6A371.12 371.12 0 01140 560c0-99.4 38.7-192.8 109-263 70.3-70.3 163.7-109 263-109 99.4 0 192.8 38.7 263 109 70.3 70.3 109 163.7 109 263 0 105.6-44.5 205.5-122.6 276zM623.5 421.5a8.03 8.03 0 00-11.3 0L527.7 506c-18.7-5-39.4-.2-54.1 14.5a55.95 55.95 0 000 79.2 55.95 55.95 0 0079.2 0 55.87 55.87 0 0014.5-54.1l84.5-84.5c3.1-3.1 3.1-8.2 0-11.3l-28.3-28.3zM490 320h44c4.4 0 8-3.6 8-8v-80c0-4.4-3.6-8-8-8h-44c-4.4 0-8 3.6-8 8v80c0 4.4 3.6 8 8 8zm260 218v44c0 4.4 3.6 8 8 8h80c4.4 0 8-3.6 8-8v-44c0-4.4-3.6-8-8-8h-80c-4.4 0-8 3.6-8 8zm12.7-197.2l-31.1-31.1a8.03 8.03 0 00-11.3 0l-56.6 56.6a8.03 8.03 0 000 11.3l31.1 31.1c3.1 3.1 8.2 3.1 11.3 0l56.6-56.6c3.1-3.1 3.1-8.2 0-11.3zm-458.6-31.1a8.03 8.03 0 00-11.3 0l-31.1 31.1a8.03 8.03 0 000 11.3l56.6 56.6c3.1 3.1 8.2 3.1 11.3 0l31.1-31.1c3.1-3.1 3.1-8.2 0-11.3l-56.6-56.6zM262 530h-80c-4.4 0-8 3.6-8 8v44c0 4.4 3.6 8 8 8h80c4.4 0 8-3.6 8-8v-44c0-4.4-3.6-8-8-8z" />
+                </svg></span><span class="label">會員分析</span></a></li>
+          <!-- 會員資料 · UserOutlined -->
+          <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896">
+                  <path
+                    d="M858.5 763.6a374 374 0 00-80.6-119.5 375.63 375.63 0 00-119.5-80.6c-.4-.2-.8-.3-1.2-.5C719.5 518 760 444.7 760 362c0-137-111-248-248-248S264 225 264 362c0 82.7 40.5 156 102.8 201.1-.4.2-.8.3-1.2.5-44.8 18.9-85 46-119.5 80.6a375.63 375.63 0 00-80.6 119.5A371.7 371.7 0 00136 901.8a8 8 0 008 8.2h60c4.4 0 7.9-3.5 8-7.8 2-77.2 33-149.5 87.8-204.3 56.7-56.7 132-87.9 212.2-87.9s155.5 31.2 212.2 87.9C779 752.7 810 825 812 902.2c.1 4.4 3.6 7.8 8 7.8h60a8 8 0 008-8.2c-1-47.8-10.9-94.3-29.5-138.2zM512 534c-45.9 0-89.1-17.9-121.6-50.4S340 407.9 340 362c0-45.9 17.9-89.1 50.4-121.6S466.1 190 512 190s89.1 17.9 121.6 50.4S684 316.1 684 362c0 45.9-17.9 89.1-50.4 121.6S557.9 534 512 534z" />
+                </svg></span><span class="label">會員資料</span></a></li>
+          <!-- 帳號管理 · iconfont #icon-icon-assignpermissions -->
+          <li class="selected"><a href="#"><span class="icon"><svg viewBox="0 0 1024 1024">
+                  <path
+                    d="M512 18.271l400.677 89.04c22.305 4.958 38.18 24.74 38.18 47.59v444.334c0 97.819-48.9 189.163-130.292 243.42L512 1019.27 203.435 842.654c-81.378-54.247-130.269-145.569-130.292-243.37V154.902c0-22.85 15.875-42.633 38.18-47.592L512 18.271zM170.667 194.01v405.226c0 65.21 32.59 126.105 86.845 162.28L512 902.095l254.488-140.58c54.241-36.166 86.828-97.039 86.845-162.231V194.009L512 118.233l-341.333 75.776zM512 268.19c44.147-0.02 82.802 29.62 94.239 72.26 11.437 42.64-7.197 87.644-45.428 109.72l-0.05 208.116h-97.523V450.17c-38.224-22.071-56.858-67.063-45.434-109.697S467.862 268.19 512 268.19z" />
+                </svg></span><span class="label">帳號管理</span></a></li>
+          <!-- 門市管理 · PartitionOutlined -->
+          <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896">
+                  <path
+                    d="M640.6 429.8h257.1c7.9 0 14.3-6.4 14.3-14.3V158.3c0-7.9-6.4-14.3-14.3-14.3H640.6c-7.9 0-14.3 6.4-14.3 14.3v92.9H490.6c-3.9 0-7.1 3.2-7.1 7.1v221.5h-85.7v-96.5c0-7.9-6.4-14.3-14.3-14.3H126.3c-7.9 0-14.3 6.4-14.3 14.3v257.2c0 7.9 6.4 14.3 14.3 14.3h257.1c7.9 0 14.3-6.4 14.3-14.3V544h85.7v221.5c0 3.9 3.2 7.1 7.1 7.1h135.7v92.9c0 7.9 6.4 14.3 14.3 14.3h257.1c7.9 0 14.3-6.4 14.3-14.3v-257c0-7.9-6.4-14.3-14.3-14.3h-257c-7.9 0-14.3 6.4-14.3 14.3v100h-78.6v-393h78.6v100c0 7.9 6.4 14.3 14.3 14.3zm53.5-217.9h150V362h-150V211.9zM329.9 587h-150V437h150v150zm364.2 75.1h150v150.1h-150V662.1z" />
+                </svg></span><span class="label">門市管理</span></a></li>
+          <!-- 系統設定 · LayoutOutlined -->
+          <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896">
+                  <path
+                    d="M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-696 72h136v656H184V184zm656 656H384V384h456v456zM384 320V184h456v136H384z" />
+                </svg></span><span class="label">系統設定</span></a></li>
+          <!-- 下載區 · CloudDownloadOutlined -->
+          <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896">
+                  <path
+                    d="M624 706.3h-74.1V464c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v242.3H400c-6.7 0-10.4 7.7-6.3 12.9l112 141.7a8 8 0 0012.6 0l112-141.7c4.1-5.2.4-12.9-6.3-12.9zM811.4 366.7C765.6 245.9 648.9 160 512.2 160S258.8 245.8 213 366.6C127.3 389.1 64 467.2 64 560c0 110.5 89.5 200 199.9 200H304c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8h-40.1c-33.7 0-65.4-13.4-89-37.7-23.5-24.2-36-56.8-34.9-90.6.9-26.4 9.9-51.2 26.2-72.1 16.7-21.3 40.1-36.8 66.1-43.7l37.9-9.9 13.9-36.6c8.6-22.8 20.6-44.1 35.7-63.4a245.6 245.6 0 0152.4-49.9c41.1-28.9 89.5-44.2 140-44.2s98.9 15.3 140 44.2c19.9 14 37.5 30.8 52.4 49.9 15.1 19.3 27.1 40.7 35.7 63.4l13.8 36.5 37.8 10C846.1 454.5 884 503.8 884 560c0 33.1-12.9 64.3-36.3 87.7a123.07 123.07 0 01-87.6 36.3H720c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h40.1C870.5 760 960 670.5 960 560c0-92.7-63.1-170.7-148.6-193.3z" />
+                </svg></span><span class="label">下載區</span></a></li>
+          <!-- 使用手冊 · FileOutlined -->
+          <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896">
+                  <path
+                    d="M854.6 288.6L639.4 73.4c-6-6-14.1-9.4-22.6-9.4H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V311.3c0-8.5-3.4-16.7-9.4-22.7zM790.2 326H602V137.8L790.2 326zm1.8 562H232V136h302v216a42 42 0 0042 42h216v494z" />
+                </svg></span><span class="label">使用手冊</span></a></li>
+        </ul>
+      </aside>
+
+      <main class="pro-content">
+        <h1 class="page-title">帳號管理</h1>
+        <div class="tabs">
+          <div class="tab active">帳號列表</div>
+          <div class="tab">權限設定</div>
+          <div class="tab">登入紀錄</div>
+        </div>
+        <div class="card">
+          <div class="filter-row">
+            <div class="filter-item"><label>門市名稱</label>
+              <div class="fake-input">請選擇</div>
+            </div>
+            <div class="filter-item"><label>帳號</label>
+              <div class="fake-input">請輸入</div>
+            </div>
+            <div class="filter-item"><label>角色</label>
+              <div class="fake-input">請選擇</div>
+            </div>
+            <div class="filter-actions"><button class="btn">清 除</button><button class="btn primary">搜 尋</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <p class="content-note">（內容區為示意 placeholder；本版聚焦 header 與 sider 佈局。實際表格依各模組設計。）</p>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+
+</html>
