@@ -958,7 +958,8 @@ const {
   FilterOutlined, WarningOutlined, StopOutlined, CrownOutlined, GiftOutlined, TrophyOutlined,
   TagOutlined, CalendarOutlined, ClockCircleOutlined, PhoneOutlined, MailOutlined,
   ArrowUpOutlined, ArrowDownOutlined, EllipsisOutlined, MenuOutlined, AppstoreOutlined,
-  FileOutlined, StarFilled, QuestionCircleOutlined
+  FileOutlined, StarFilled, QuestionCircleOutlined,
+  LayoutOutlined, DashboardOutlined, PartitionOutlined, CloudDownloadOutlined
 } = icons;
 
 const { Title, Text, Paragraph, Link } = Typography;
@@ -968,12 +969,12 @@ const echossTheme = {
   token: {
     colorPrimary: '#07C373', colorLink: '#1BAA6D', colorSuccess: '#07C373',
     colorWarning: '#FCB321', colorError: '#FF4D4F', colorInfo: '#1A9CFF',
-    colorBgLayout: '#F8F9FA', colorBorder: '#D9D9D9',
+    colorBgLayout: '#F5F5F5', colorBorder: '#D9D9D9', colorSplit: '#f0f0f0',
     fontFamily: "'Noto Sans TC', sans-serif",
     fontSize: 14, borderRadius: 6, borderRadiusLG: 8, borderRadiusSM: 4,
     controlHeight: 32, controlHeightLG: 40, controlHeightSM: 24,
   },
-  components: { Layout: { siderBg: '#fff', headerBg: '#fff' } }
+  components: { Layout: { siderBg: 'transparent', headerBg: 'transparent' } }
 };
 
 function h(type, props) {
@@ -1021,6 +1022,9 @@ function App() {
   const [collapseKeys, setCollapseKeys] = React.useState(['1']);
 
   const navItems = [
+    { type: 'group', label: 'Layout', children: [
+      { key: 'app-layout', icon: h(LayoutOutlined), label: 'ProLayout (mix)' },
+    ]},
     { type: 'group', label: 'Foundation', children: [
       { key: 'colors', icon: h(TagOutlined), label: 'Color Palette' },
       { key: 'tokens', icon: h(SettingOutlined), label: 'Design Tokens' },
@@ -1158,7 +1162,7 @@ function App() {
             h('div', { style: { width: 32, height: 32, background: '#07C373', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16, flexShrink: 0 } }, 'E'),
             h('div', null, h(Text, { strong: true, style: { fontSize: 15, display: 'block', lineHeight: '1.2' } }, 'Echoss VIP'), h(Text, { type: 'secondary', style: { fontSize: 11 } }, 'Design System'))
           ),
-          h(Tag, { color: 'success', icon: h(AppstoreOutlined), style: { marginTop: 10, borderRadius: 99 } }, 'v1.0 · Ant Design 5')
+          h(Tag, { color: 'success', icon: h(AppstoreOutlined), style: { marginTop: 10, borderRadius: 99 } }, 'v1.2 · Ant Design 5')
         ),
         // Development 選單
         activeTab === 'development' && h(Menu, {
@@ -1370,6 +1374,42 @@ function App() {
 
           activeTab === 'overview' && h('div', { id: 'main-panel', style: { padding: 40, maxWidth: 1200 } },
 
+          h(Section, { id: 'app-layout', title: '應用框架 Layout', icon: h(LayoutOutlined), desc: '後台整體框架採 @ant-design/pro-components 的 ProLayout，layout="mix"：全寬 Header（左 logo 區 256 + 右 actions）＋下方 Sider 選單 + Content。下方為實機預覽，載入 references/layout-shell.html。' },
+            h(Card, { style: { marginBottom: 16 }, styles: { body: { padding: 0 } } },
+              h('iframe', { src: 'references/layout-shell.html', title: 'Echoss VIP mix layout', loading: 'lazy', style: { width: '100%', height: 560, border: 'none', display: 'block' } })
+            ),
+            h(Row, { gutter: 16 },
+              h(Col, { span: 14 },
+                h(Card, { title: 'ProLayout / 實測參數', size: 'small' },
+                  h(Descriptions, { column: 1, size: 'small', bordered: true, items: [
+                    { key: '1', label: '佈局 / 主題', children: h(Space, { split: h(Divider, { type: 'vertical' }) }, h(Tag, null, 'layout="mix"'), h(Tag, null, 'navTheme="light"'), h(Tag, null, 'fixSiderbar')) },
+                    { key: '2', label: 'Header 高', children: '56' },
+                    { key: '3', label: 'Sider 寬', children: '256（透明、右緣 1px #f0f0f0）' },
+                    { key: '4', label: '底色', children: 'body linear-gradient(#ffffff, #f5f5f5 28%)；header/sider/content 透明' },
+                    { key: '5', label: '選單項', children: '高 40、padding 0 16、radius 6、icon 14、gap 8' },
+                    { key: '6', label: '選中態', children: 'bg rgba(0,0,0,.04) + 文字 rgba(0,0,0,.95)（中性灰底深字）' },
+                    { key: '7', label: 'Content padding', children: '上 8 / 右 40 / 下 16 / 左 40' },
+                  ] })
+                )
+              ),
+              h(Col, { span: 10 },
+                h(Card, { title: '選單 icon 對應', size: 'small' },
+                  h(List, { size: 'small', dataSource: [
+                    { n: '功能模組', i: h(AppstoreOutlined), t: 'AppstoreOutlined' },
+                    { n: '會員分析', i: h(DashboardOutlined), t: 'DashboardOutlined' },
+                    { n: '會員資料', i: h(UserOutlined), t: 'UserOutlined' },
+                    { n: '帳號管理', i: h('span', { className: 'anticon', style: { fontSize: 14, lineHeight: 0 } }, h('svg', { viewBox: '0 0 1024 1024', width: '1em', height: '1em', fill: 'currentColor', 'aria-hidden': true }, h('path', { d: 'M512 18.271l400.677 89.04c22.305 4.958 38.18 24.74 38.18 47.59v444.334c0 97.819-48.9 189.163-130.292 243.42L512 1019.27 203.435 842.654c-81.378-54.247-130.269-145.569-130.292-243.37V154.902c0-22.85 15.875-42.633 38.18-47.592L512 18.271zM170.667 194.01v405.226c0 65.21 32.59 126.105 86.845 162.28L512 902.095l254.488-140.58c54.241-36.166 86.828-97.039 86.845-162.231V194.009L512 118.233l-341.333 75.776zM512 268.19c44.147-0.02 82.802 29.62 94.239 72.26 11.437 42.64-7.197 87.644-45.428 109.72l-0.05 208.116h-97.523V450.17c-38.224-22.071-56.858-67.063-45.434-109.697S467.862 268.19 512 268.19z' }))), t: 'iconfont #icon-icon-assignpermissions' },
+                    { n: '門市管理', i: h(PartitionOutlined), t: 'PartitionOutlined' },
+                    { n: '系統設定', i: h(LayoutOutlined), t: 'LayoutOutlined' },
+                    { n: '下載區', i: h(CloudDownloadOutlined), t: 'CloudDownloadOutlined' },
+                    { n: '使用手冊', i: h(FileOutlined), t: 'FileOutlined' },
+                  ], renderItem: function(it) { return h(List.Item, null, h(List.Item.Meta, { avatar: it.i, title: it.n, description: h(Text, { type: 'secondary', style: { fontSize: 12 } }, it.t) })); } })
+                )
+              )
+            )
+          ),
+
+
 
           h(Section, { id: 'colors', title: 'Color Palette', icon: h(TagOutlined), desc: '品牌色以 #07C373 為基底，透過 @ant-design/colors generate() 推算完整 10 階色盤。懸停查看色碼。' },
             h(Space, { direction: 'vertical', size: 20, style: { width: '100%' } },
@@ -1399,7 +1439,8 @@ function App() {
                   { key: 'colorWarning', token: 'colorWarning', value: '#FCB321', usage: '警示狀態' },
                   { key: 'colorError', token: 'colorError', value: '#FF4D4F', usage: '錯誤、Danger Button' },
                   { key: 'colorInfo', token: 'colorInfo', value: '#1A9CFF', usage: '資訊提示' },
-                  { key: 'colorBgLayout', token: 'colorBgLayout', value: '#F8F9FA', usage: '頁面整體背景' },
+                  { key: 'colorBgLayout', token: 'colorBgLayout', value: '#F5F5F5', usage: '頁面底色基準（實際 body 漸層 #fff→#f5f5f5；header/sider/content 透明）' },
+                  { key: 'colorSplit', token: 'colorSplit', value: '#f0f0f0', usage: '分隔線：sider 右緣、header 下緣、tabs、卡片' },
                   { key: 'colorBorder', token: 'colorBorder', value: '#D9D9D9', usage: '通用邊框色' },
                   { key: 'fontFamily', token: 'fontFamily', value: 'Noto Sans TC, sans-serif', usage: '全域字型' },
                   { key: 'fontSize', token: 'fontSize', value: '14px', usage: '基礎字型大小' },
