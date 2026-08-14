@@ -11,13 +11,13 @@ description: >
 # Echoss VIP Design System — SKILL
 
 > 本文件為 Echoss VIP 開發團隊的 UI 設計系統規範，供 PM、前端工程師、設計師在 Claude 上共用。
-> 維護者：設計端（powchuang）｜最後更新：2026-08-12｜版本：v1.2
+> 維護者：設計端（powchuang）｜最後更新：2026-08-14｜版本：v1.2
 
 ---
 
 ## 使用說明
 
-**PM 製作 Prototype 時**，在 Claude 新對話的第一句話貼上「Claude Prompt 模板」章節的內容，Claude 就會以 Echoss VIP 規範輸出。需要完整後台框架時，直接附上 `references/layout-shell.html`。
+**PM 製作 Prototype 時**，在 Claude 新對話的第一句話貼上「Claude Prompt 模板」章節的內容，Claude 就會以 Echoss VIP 規範輸出。需要完整後台外框（Header + Sider）時附上 `references/layout-shell.html`；需要列表頁／新增內容頁版型時附上 `references/content-layouts.html`。
 
 **前端工程師**，參照「ConfigProvider 設定」章節複製 `echossTheme`，並依「應用框架 Layout」章節套用 ProLayout。
 
@@ -212,6 +212,7 @@ description: >
 
 ### Table 表格
 
+- **項次欄（#）：** **所有列表 table 最左側都必須有項次欄。** 使用 ProTable 欄位 `valueType: 'index'`（顯示 1、2、3…列序）。實測參數：標題文字 `#`、欄寬 `36`、靠左（`align: 'left'`／`text-align: start`）、表頭與儲存格 padding `12px 8px`；表頭底色 `#fafafa`、字重 600、色 `rgba(0,0,0,.88)`、底線 `1px #f0f0f0`。**放在所有欄位之前。**
 - **啟用欄：** 使用 `<Switch size="small" />`，即時反映啟用狀態
 - **操作欄：** 依「操作連結 taxonomy」決定顏色，見下方規範
 
@@ -394,6 +395,74 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 body { background: linear-gradient(#ffffff, #f5f5f5 28%) fixed; }
 ```
 
+> ⚠️ **選單 icon 一律引用 `references/layout-shell.html` 的完整 SVG path，勿自行截斷或改寫。** 截斷 path 會導致 icon 破圖（例如 `PartitionOutlined` 少了三個方框子路徑會變成實心塊、`DashboardOutlined` 少了指針會變純圓圈）。八個選單完整 path 皆已鎖定於 layout-shell.html。
+
+### 4.6 列表頁 Layout（PageContainer + ProTable）
+
+模組列表頁一律以 **`PageContainer`** 包裹，內含 breadcrumb → 標題 →（可選）tabs → 內容。完整可貼骨架見 **`references/content-layouts.html`**（預設顯示列表頁 L2）。
+
+**Breadcrumb 規則（三層，由 PageContainer header 產生，位於標題正上方）**
+
+| 層級 | 範例 | 說明 |
+|---|---|---|
+| L1（root） | `功能模組` | 功能群組，導覽節點 |
+| L2（列表頁） | `功能模組 / 優惠模組` | 進入模組後 |
+| L3（新增/編輯內容頁） | `功能模組 / 優惠模組 / 新增票券` | 再下一層 |
+
+- 字級 `14px`；祖節點色 `rgba(0,0,0,.45)`、**當前（末）節點** `rgba(0,0,0,.88)`；分隔線 `/` 色 `rgba(0,0,0,.45)`、`margin 0 8px`。
+- PageContainer header padding **`8px 40px 16px`**（與 content 內距一致）；標題 `20px/600`。
+- ⚠️ 列表頁 breadcrumb 末節點為「模組名」（如 `優惠模組`），頁標題卻可能是 tab 實體（如 `優惠票券`），兩者不一定同字。
+
+**版面結構（實測）**
+
+- 篩選區與表格**各自一張 `ant-pro-card`**（白底、radius 6）。
+- **表格必須包在 card 內**；表格 card 的 `ant-pro-card-body` padding 為 **`0 24px 16px`**（表格內容自卡片左右緣內縮 24px，勿貼齊邊緣）。
+- **ProTable 工具列（`toolBarRender`）**：主要動作鈕（如「新增資料／新增票券」，Button `type="primary"`）置於工具列**右側、緊貼**設定 icon 群（`⟳` 重新整理 / `☰` 密度 / `⚙` 欄位設定）——即實測後台 `.ant-pro-table-list-toolbar-right` 內、`setting-items` 之前的順序。
+- 表格最左側為**項次欄**（見§三 Table）。
+
+### 4.7 內容頁 Layout（新增／編輯頁）
+
+第三層新增／編輯內容頁：`PageContainer`（breadcrumb 三層 + 標題，**無 tabs**）→ 一或多個**獨立 Panel** → 頁尾 Copyright。
+
+**Panel（區塊）**
+
+- 以 **`ProCard`（bordered + title）** 呈現，等同獨立 panel：白底、`border 1px #f0f0f0`、radius 8。
+- **Panel 標題**（bold 16/600）為區塊名（如「基本資料」「儲值面額與限制」「集點加碼」）。
+- **`panel-body` padding：`16px 24px 16px 24px`**。
+- 相關欄位可依語意拆成多個獨立 panel（例：儲值面額一個 panel；發點規則＋集點加碼一個 panel）。
+
+**表單（ProForm，horizontal）**
+
+- 每個欄位一律用 **form-item 格式**：左側 label（固定寬、右對齊、無冒號、必填紅星 `*` `#FF4D4F` 在前）＋右側控件。**區塊內所有標題與內容都要用 form-item 格式，不可把欄位名做成 bold 區塊標題。**
+- 設計系統標準 label 欄寬 **`188px`**；控件高 `32px`；欄距 `margin-bottom 24px`；輔助說明 `rgba(0,0,0,.45)` `14px`。
+- （若採「欄位標題＝元件名」的參考版，label 較長可加寬至約 `210px`，見 §4.8。）
+
+**動作列（取消／儲存）**
+
+- **每個 panel 各自擁有一組 `取消`（default）＋`儲存`（primary）動作列，置於該 panel body 的左下角**（靠 panel 左緣對齊，`margin-left:0`）。
+- ⚠️ 不使用整頁共用的單一底部動作列。
+
+### 4.8 欄位元件命名對照（@ant-design/pro-components）
+
+為讓同仁能「複製欄位名即呼叫對應元件」，內容頁 Prototype 的**欄位標題直接寫該欄位所用的 pro 元件名稱**（與 `@ant-design/pro-components` 一致；不需實作複製按鈕）。
+
+| 欄位型別 | 標題（元件名） | 備註 |
+|---|---|---|
+| 文字輸入 | `ProFormText` | |
+| 數字輸入 | `ProFormDigit` | |
+| 下拉選單 | `ProFormSelect` | |
+| 單選（按鈕群） | `ProFormRadio.Group` | `optionType: button`（選中＝品牌綠底白字） |
+| 單選（原生圈） | `ProFormRadio.Group` | |
+| 日期 | `ProFormDatePicker` | |
+| 日期區間 | `ProFormDateRangePicker` | |
+| 上傳 | `ProFormUploadButton` | |
+| 富文本 | `ProForm.Item` | 內層為 **ReactQuill（Quill `snow` 主題）**；pro 無官方富文本元件，實測後台即 react-quill |
+| 可增刪列表組合 | `ProFormList` | item 內含 `ProFormText`／`ProFormDigit`；例：儲值面額（面額＋標籤（選填）＋顯示/隱藏 eye icon＋刪除 icon＋「新增」dashed 鈕） |
+| 固定分組欄位 | `ProForm.Group` | 各等級固定、單一條件的組合型（降階版 ProList）；item 為 `ProFormDigit`；例：發點規則（各等級「消費滿 X 元獲得一點」） |
+| 資料列表（含操作） | `ProList` | 每列標題＋灰色描述＋右側動作連結（如「設定」）；例：各等級加碼設定 |
+
+> 內容頁上方建議加一行說明：「欄位標題即對應的 `@ant-design/pro-components` 元件名稱，可直接複製呼叫該元件。」
+
 ---
 
 ## 五、ConfigProvider 設定
@@ -476,7 +545,14 @@ PM 在 Claude.ai 開新對話時，將以下內容**整段複製**貼在第一�
 - 分隔線 #f0f0f0：header 下緣（全寬）、sider 右緣（y≥56）
 - 選單 item 高 40、padding 0 16、radius 6、icon 14px；選中態灰底深字 bg rgba(0,0,0,.04)/color rgba(0,0,0,.95)
 - content padding 上8/右40/下16/左40；page-title padding-top 8
-- 選單 icon：功能模組 AppstoreOutlined、會員分析 DashboardOutlined、會員資料 UserOutlined、帳號管理 iconfont #icon-icon-assignpermissions、門市管理 PartitionOutlined、系統設定 LayoutOutlined、下載區 CloudDownloadOutlined、使用手冊 FileOutlined
+- 選單 icon：功能模組 AppstoreOutlined、會員分析 DashboardOutlined、會員資料 UserOutlined、帳號管理 iconfont #icon-icon-assignpermissions、門市管理 PartitionOutlined、系統設定 LayoutOutlined、下載區 CloudDownloadOutlined、使用手冊 FileOutlined（icon 一律用 layout-shell.html 完整 path，勿截斷）
+
+【列表頁 / 內容頁 Layout（PageContainer）】
+- 頁面以 PageContainer 包裹：breadcrumb（在上）→ 標題 20/600 →（列表頁才有）tabs → 內容；header padding 8/40/16
+- Breadcrumb 三層：功能模組 /（模組名）/（動作名，如 新增票券）；祖節點 rgba(0,0,0,.45)、當前節點 rgba(0,0,0,.88)、分隔線 / 為 rgba(0,0,0,.45)
+- 列表頁：篩選 card + 表格 card 各自獨立；表格包在 card 內、card body padding 0 24 16；ProTable toolBarRender 的新增鈕（primary）置右、緊貼工具 icon（重新整理/密度/欄位設定）
+- 內容頁：每個區塊為獨立 ProCard（bordered + 標題，panel-body padding 16 24）；欄位一律 form-item 格式（label 左 188、右對齊、必填紅星在前）；**每個 panel 各有自己的「取消/儲存」動作列於左下角**，不用整頁單一動作列
+- 內容頁欄位標題直接寫對應的 @ant-design/pro-components 元件名（可複製呼叫）：ProFormText / ProFormDigit / ProFormSelect / ProFormRadio.Group（button 或原生）/ ProFormDatePicker / ProFormDateRangePicker / ProFormUploadButton / ProForm.Item（ReactQuill 富文本）/ ProFormList（可增刪列表）/ ProForm.Group（各等級固定分組）/ ProList（資料列表含操作）
 
 【品牌色碼（必須使用）】
 - Primary: #07C373（品牌綠）
@@ -497,6 +573,7 @@ PM 在 Claude.ai 開新對話時，將以下內容**整段複製**貼在第一�
 - Radio.Button → 擇一選值且選中狀態需保留（如時間維度、設定頁選項）；不可用於觸發一次性動作
 - Tag → success=正向、processing=進行中、warning=警示、error=錯誤/失效
 - Form → layout="horizontal"，labelCol={{ span: 6 }}，wrapperCol={{ span: 18 }}
+- Table 項次欄 → 所有列表 table 最左側都要有項次欄（ProTable valueType="index"，標題 #、寬 36、靠左）
 - Table 啟用欄 → Switch size="small"
 - Table 操作欄 → 依操作連結 taxonomy 上色：主要/導覽（編輯、詳情、內容連結）=品牌綠 #07C373；次級動作（新增、匯入、匯出、產生）=品牌黃 #FCB321；破壞性（刪除、作廢、撤銷）=品牌紅 #FF4D4F；停用=灰階不可點 #8c8c8c。列表內連結預設品牌綠、不用藍色；多個操作以「|」分隔。個別模組語意特殊的操作依實際語意歸類（如序號模組「收回」為可還原動作，歸次級=黃）
 
@@ -511,9 +588,20 @@ PM 在 Claude.ai 開新對話時，將以下內容**整段複製**貼在第一�
 
 ## 七、版本紀錄
 
-### v1.2 — 2026-08-12
+### v1.2 — 2026-08-14
 
-**新增「應用框架 Layout（ProLayout）」章節**
+> 本版合併了 08-12 首版 v1.2（應用框架 Layout）與 08-14 的頁面層規範（項次欄、breadcrumb、列表頁／內容頁 Layout、欄位元件命名），一併發布。
+
+**新增頁面層規範（08-14 併入）**
+- Table 新增「項次欄」規範：所有列表最左側加項次欄（ProTable `valueType:'index'`，`#`、寬 36、靠左、表頭 `#fafafa`）
+- 新增 §4.6 列表頁 Layout：PageContainer + breadcrumb 三層規則、篩選/表格雙 card、表格 card body padding `0 24 16`、ProTable `toolBarRender` 新增鈕靠右緊貼工具 icon
+- 新增 §4.7 內容頁 Layout：獨立 ProCard panel（bordered+title、body padding `16 24`）、form-item 格式、**每個 panel 各自左下角動作列**
+- 新增 §4.8 欄位元件命名對照：內容頁欄位標題＝對應 pro 元件名（ProFormText / ProFormList / ProForm.Group / ProForm.Item(ReactQuill) / ProList …）供同仁複製呼叫
+- 補充：內容頁富文本實測為 **ReactQuill（Quill snow）**，非 pro 官方元件
+- 新增參考檔 `references/content-layouts.html`（列表頁 L2 + 內容頁 L3 完整骨架，可貼）
+- 強調：選單 icon 一律引用 `layout-shell.html` 完整 SVG path，勿自行截斷（截斷會破圖）
+
+**（08-12 首版 v1.2）新增「應用框架 Layout（ProLayout）」章節**
 - 判定後台為 ProLayout `layout="mix"`，附結構圖與 side/mix 差異說明
 - 加入 ProLayout props 對照表、實測參數表（header 56 / sider 256 / 選單 / 選中態 / content padding 等全數鎖定值）
 - 選單 icon 對應表（含帳號管理 iconfont `#icon-icon-assignpermissions`）
