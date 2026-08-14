@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Echoss VIP — 列表頁 & 內容頁 Layout（PageContainer / ProTable / ProForm）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --colorPrimary:#07C373; --colorLink:#1BAA6D; --colorWarning:#FCB321;
+    --colorError:#FF4D4F; --colorInfo:#1A9CFF;
+    --colorBgContainer:#ffffff; --colorBorder:#D9D9D9; --colorSplit:#f0f0f0;
+    --colorText:rgba(0,0,0,0.88); --colorTextSecondary:rgba(0,0,0,0.65);
+    --colorTextTertiary:rgba(0,0,0,0.45); --colorTextDisabled:#8c8c8c;
+    --colorTextPlaceholder:rgba(0,0,0,0.25);
+    --colorMenuSelBg:rgba(0,0,0,0.04); --colorMenuSelText:rgba(0,0,0,0.95);
+    --tableHeadBg:#fafafa;
+    --fontFamily:'Noto Sans TC', sans-serif;
+    --headerHeight:56px; --headerPadX:16px; --siderWidth:256px; --siderCollapsedWidth:64px;
+    --menuGutter:8px; --menuItemHeight:40px; --iconSize:14px;
+    --contentPadX:40px; --controlHeight:32px;
+    /* 本頁為「元件參考」版：欄位標題＝pro 元件名，故 label 欄加寬到 210（實際設計系統值為 188） */
+    --labelWidth:210px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{font-family:var(--fontFamily);font-size:14px;color:var(--colorText);
+    background:linear-gradient(#ffffff, #f5f5f5 28%) fixed;-webkit-font-smoothing:antialiased;}
+  .pro-layout{display:flex;flex-direction:column;min-height:100vh;background:transparent;}
+
+  /* Header —— 實心白底（=漸層頂端色），sticky 時遮住捲動內容，避免 sider 線透到 header */
+  .pro-header{height:var(--headerHeight);flex:0 0 auto;display:flex;align-items:stretch;background:#ffffff;border-bottom:1px solid var(--colorSplit);position:sticky;top:0;z-index:20;}
+  .pro-header__logo{width:var(--siderWidth);flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:0 16px;}
+  .pro-header__logo img{width:28px;height:28px;flex:0 0 auto;display:block;}
+  .pro-header__logo .logo-fallback{width:28px;height:28px;border-radius:50%;flex:0 0 auto;background:#1f1f1f;display:none;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;}
+  .pro-header__logo .title{font-size:17px;font-weight:700;color:var(--colorText);white-space:nowrap;letter-spacing:.2px;}
+  .pro-header__actions{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:20px;padding:0 var(--headerPadX);}
+  .lang-select{display:flex;align-items:center;gap:24px;height:36px;padding:0 12px;border:1px solid var(--colorBorder);border-radius:6px;color:var(--colorTextPlaceholder);font-size:14px;cursor:pointer;min-width:150px;justify-content:space-between;background:#fff;}
+  .lang-select .chev{color:var(--colorTextTertiary);font-size:12px;}
+  .user-block{display:flex;align-items:center;gap:10px;cursor:pointer;}
+  .user-block .avatar{width:22px;height:22px;border-radius:50%;object-fit:cover;background:#fff;}
+  .user-block .meta{display:flex;flex-direction:column;line-height:1.2;}
+  .user-block .meta .name{font-size:14px;font-weight:600;color:var(--colorText);}
+  .user-block .meta .role{font-size:12px;color:var(--colorTextDisabled);}
+  .env-badge{background:var(--colorPrimary);color:#fff;font-size:12px;font-weight:500;line-height:1;padding:5px 7px;border-radius:4px;white-space:nowrap;}
+
+  /* Sider */
+  .pro-body{display:flex;flex:1 1 auto;min-height:0;}
+  /* Sider —— sticky 於 header 下方（top:56），border 僅存在於 y≥56，不會伸進 header */
+  .pro-sider{position:sticky;top:var(--headerHeight);align-self:flex-start;height:calc(100vh - var(--headerHeight));width:var(--siderWidth);flex:0 0 auto;background:transparent;border-right:1px solid var(--colorSplit);display:flex;flex-direction:column;}
+  .collapse-btn{position:absolute;top:20px;right:-13px;width:26px;height:26px;border-radius:50%;background:#fff;border:1px solid var(--colorSplit);box-shadow:0 2px 6px rgba(0,21,41,.08);display:flex;align-items:flex-end;justify-content:center;cursor:pointer;color:var(--colorTextDisabled);font-size:20px;z-index:11;}
+  .pro-menu{list-style:none;margin:0;padding:0 var(--menuGutter);overflow-y:auto;flex:1;}
+  .pro-menu li{margin:4px;}
+  .pro-menu a{display:flex;align-items:center;gap:8px;height:var(--menuItemHeight);padding:0 16px;border-radius:6px;color:var(--colorTextSecondary);text-decoration:none;font-size:14px;white-space:nowrap;overflow:hidden;}
+  .pro-menu a .icon{width:var(--iconSize);height:var(--iconSize);flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .pro-menu a .icon svg{width:var(--iconSize);height:var(--iconSize);fill:currentColor;}
+  .pro-menu a:hover{background:rgba(0,0,0,.04);color:var(--colorText);}
+  .pro-menu li.selected a{background:var(--colorMenuSelBg);color:var(--colorMenuSelText);font-weight:600;}
+
+  /* Content / PageContainer */
+  .pro-content{flex:1 1 auto;min-width:0;background:transparent;display:flex;flex-direction:column;}
+  .pc-header{padding:8px var(--contentPadX) 16px;}
+  .pc-breadcrumb{display:flex;align-items:center;font-size:14px;line-height:22px;}
+  .pc-breadcrumb .crumb{color:var(--colorTextTertiary);}
+  .pc-breadcrumb .crumb.current{color:var(--colorText);}
+  .pc-breadcrumb .crumb.link{cursor:pointer;}
+  .pc-breadcrumb .crumb.link:hover{color:var(--colorPrimary);}
+  .pc-breadcrumb .sep{color:var(--colorTextTertiary);margin:0 8px;}
+  .pc-title{font-size:20px;font-weight:600;color:var(--colorText);margin:2px 0 0;line-height:1.4;}
+  .pc-tabs{display:flex;gap:32px;padding:0 var(--contentPadX);border-bottom:1px solid var(--colorSplit);}
+  .pc-tabs .tab{padding:12px 0;color:var(--colorTextSecondary);cursor:pointer;position:relative;font-size:14px;}
+  .pc-tabs .tab.active{color:var(--colorPrimary);font-weight:600;}
+  .pc-tabs .tab.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--colorPrimary);}
+  .pc-body{padding:16px var(--contentPadX) 24px;flex:1;}
+
+  .card{background:var(--colorBgContainer);border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .card + .card{margin-top:16px;}
+  /* ProCard body：實測列表頁 table card padding 0 24px 16px */
+  .card-body{padding:0 24px 16px;}
+  .card-body.pad-all{padding:16px 24px;}
+
+  /* 篩選列 */
+  .filter-row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end;padding:16px 24px;}
+  .filter-item{display:flex;flex-direction:column;gap:6px;min-width:200px;}
+  .filter-item label{font-size:14px;color:var(--colorText);}
+  .fake-input{height:var(--controlHeight);border:1px solid var(--colorBorder);border-radius:6px;display:flex;align-items:center;justify-content:space-between;padding:0 11px;color:var(--colorTextPlaceholder);background:#fff;gap:8px;}
+  .fake-input .chev{color:var(--colorTextTertiary);font-size:10px;}
+  .filter-actions{margin-left:auto;display:flex;gap:8px;}
+  .btn{height:var(--controlHeight);padding:0 16px;border-radius:6px;border:1px solid var(--colorBorder);background:#fff;color:var(--colorText);font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+  .btn.primary{background:var(--colorPrimary);border-color:var(--colorPrimary);color:#fff;}
+  .btn.dashed{border-style:dashed;color:var(--colorTextSecondary);background:#fff;width:100%;justify-content:center;height:40px;}
+
+  /* ProTable toolbar */
+  .table-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:16px 0 12px;}
+  .tb-icons{display:flex;align-items:center;gap:16px;color:var(--colorTextSecondary);font-size:16px;}
+  .tb-icons span{cursor:pointer;}
+
+  /* 表格 */
+  table.pro-table{width:100%;border-collapse:collapse;font-size:14px;}
+  table.pro-table thead th{background:var(--tableHeadBg);color:var(--colorText);font-weight:600;text-align:left;padding:12px 8px;border-bottom:1px solid var(--colorSplit);white-space:nowrap;}
+  table.pro-table tbody td{padding:12px 8px;border-bottom:1px solid var(--colorSplit);color:var(--colorText);vertical-align:middle;}
+  table.pro-table th.col-index,table.pro-table td.col-index{width:36px;text-align:left;}
+  table.pro-table tbody tr:hover td{background:rgba(0,0,0,.02);}
+  .lnk{color:var(--colorPrimary);cursor:pointer;text-decoration:none;}
+  .lnk.warning{color:var(--colorWarning);} .lnk.danger{color:var(--colorError);} .lnk.disabled{color:var(--colorTextDisabled);cursor:not-allowed;}
+  .op-sep{color:var(--colorBorder);margin:0 8px;}
+  .sw{width:28px;height:16px;border-radius:8px;background:var(--colorPrimary);position:relative;display:inline-block;vertical-align:middle;}
+  .sw.off{background:rgba(0,0,0,.25);}
+  .sw::after{content:"";position:absolute;top:2px;left:14px;width:12px;height:12px;border-radius:50%;background:#fff;}
+  .sw.off::after{left:2px;}
+  .tag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:4px;font-size:12px;line-height:20px;border:1px solid;white-space:nowrap;}
+  .tag.success{color:#009c5d;background:#e6fff0;border-color:#79e8ad;}
+  .tag.processing{color:#0b79d9;background:#e6f8ff;border-color:#94dbff;}
+  .tag.warning{color:#d68e11;background:#fffced;border-color:#ffe89c;}
+  .tag.error{color:#d9363e;background:#fff2f0;border-color:#ffa39e;}
+  .tag.default{color:rgba(0,0,0,.65);background:#fafafa;border-color:#d9d9d9;}
+
+  /* ===== 內容頁：獨立 Panel（ProCard bordered + title）===== */
+  .panel{background:#fff;border:1px solid var(--colorSplit);border-radius:8px;margin-bottom:16px;overflow:hidden;}
+  .panel-head{padding:16px 24px;border-bottom:1px solid var(--colorSplit);font-size:16px;font-weight:600;display:flex;align-items:center;gap:6px;}
+  .panel-head .info{color:var(--colorTextTertiary);font-size:15px;font-weight:400;display:inline-flex;}
+  .panel-body{padding:16px 24px 16px 24px;}
+
+  .form-item{display:flex;align-items:flex-start;margin-bottom:24px;}
+  .form-item .fi-label{width:var(--labelWidth);flex:0 0 auto;text-align:right;padding-right:8px;padding-top:6px;font-size:14px;color:var(--colorText);white-space:nowrap;}
+  .form-item .fi-label .req{color:var(--colorError);margin-right:4px;font-family:SimSun,sans-serif;}
+  /* 元件名稱型 label（可複製呼叫的 @ant-design/pro-components 名稱） */
+  .form-item .fi-label.code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;white-space:normal;line-height:1.4;color:var(--colorText);}
+  .form-item .fi-label.code small{display:block;font-family:var(--fontFamily);font-size:11px;color:var(--colorTextTertiary);margin-top:2px;font-weight:400;}
+  .pc-subtitle{font-size:13px;color:var(--colorTextTertiary);margin-top:6px;}
+  .pc-subtitle code{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--colorText);background:#f6f6f6;padding:1px 5px;border-radius:4px;}
+  .form-item .fi-control{flex:1 1 auto;min-width:0;max-width:760px;}
+  .fi-control .ipt{height:var(--controlHeight);width:100%;border:1px solid var(--colorBorder);border-radius:6px;display:flex;align-items:center;justify-content:space-between;padding:0 11px;color:var(--colorTextPlaceholder);background:#fff;gap:8px;}
+  .fi-control .ipt.filled{color:var(--colorText);}
+  .fi-control .ipt .chev{color:var(--colorTextTertiary);font-size:10px;}
+  .fi-control .ipt .cal{color:var(--colorTextTertiary);}
+  .fi-control .extra{color:var(--colorTextTertiary);font-size:14px;line-height:1.6;margin-top:4px;}
+  .w-mid{max-width:320px;} .w-sm{max-width:180px;}
+
+  .radio-group{display:inline-flex;border-radius:6px;overflow:hidden;}
+  .radio-group .rb{height:var(--controlHeight);padding:0 16px;display:flex;align-items:center;border:1px solid var(--colorBorder);border-left-width:0;background:#fff;color:var(--colorText);font-size:14px;cursor:pointer;}
+  .radio-group .rb:first-child{border-left-width:1px;border-radius:6px 0 0 6px;}
+  .radio-group .rb:last-child{border-radius:0 6px 6px 0;}
+  .radio-group .rb.checked{background:var(--colorPrimary);border-color:var(--colorPrimary);color:#fff;}
+  .radio-list{display:flex;gap:24px;align-items:center;height:var(--controlHeight);}
+  .radio-list .r{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;}
+  .radio-list .r .dot{width:16px;height:16px;border-radius:50%;border:1px solid var(--colorBorder);display:inline-block;position:relative;}
+  .radio-list .r.checked .dot{border-color:var(--colorPrimary);}
+  .radio-list .r.checked .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--colorPrimary);}
+  .rte{border:1px solid var(--colorBorder);border-radius:6px;overflow:hidden;}
+  .rte .rte-bar{height:40px;border-bottom:1px solid var(--colorSplit);display:flex;align-items:center;gap:14px;padding:0 12px;color:var(--colorTextSecondary);font-size:13px;background:#fff;}
+  .rte .rte-area{height:120px;background:#fff;padding:10px 12px;color:var(--colorTextPlaceholder);}
+  .uploader{width:104px;height:104px;border:1px dashed var(--colorBorder);border-radius:6px;background:#fafafa;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--colorTextSecondary);cursor:pointer;}
+  .uploader .plus{font-size:20px;line-height:1;}
+
+  /* ProFormList — 儲值面額（面額 / 標籤（選填）/ 顯示切換 / 刪除） */
+  .pfl-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .pfl-row .amt{width:240px;} .pfl-row .tagn{width:240px;}
+  .pfl-row .ipt2{height:var(--controlHeight);border:1px solid var(--colorBorder);border-radius:6px;display:flex;align-items:center;padding:0 11px;background:#fff;gap:6px;color:var(--colorText);width:100%;}
+  .pfl-row .ipt2.ph{color:var(--colorTextPlaceholder);}
+  .pfl-row .ic{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;color:var(--colorTextSecondary);}
+  .pfl-row .ic:hover{background:rgba(0,0,0,.04);color:var(--colorText);}
+  .pfl-row .ic.del:hover{color:var(--colorError);}
+  .pfl-row .ic svg{width:17px;height:17px;fill:currentColor;}
+  .pfl-row .ic.hidden{color:var(--colorTextDisabled);}
+  .pfl-addbtn{max-width:calc(240px + 240px + 12px);}
+
+  /* 發點規則 — 各等級 消費滿 X 元獲得一點 */
+  .rule-row{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
+  .rule-row .lvl{width:220px;color:var(--colorText);font-size:14px;}
+  .rule-row .mid{color:var(--colorText);}
+  .rule-row .ipt3{height:var(--controlHeight);width:96px;border:1px solid var(--colorBorder);border-radius:6px;display:flex;align-items:center;padding:0 11px;background:#fff;color:var(--colorText);}
+  .rule-row .ipt3.ph{color:var(--colorTextPlaceholder);}
+
+  /* ProList — 各等級加碼設定 */
+  .prolist{border:1px solid var(--colorSplit);border-radius:8px;overflow:hidden;}
+  .prolist .pl-item{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--colorSplit);gap:16px;}
+  .prolist .pl-item:last-child{border-bottom:0;}
+  .prolist .pl-meta .pl-title{font-size:14px;color:var(--colorText);font-weight:600;margin-bottom:4px;}
+  .prolist .pl-meta .pl-desc{font-size:13px;color:var(--colorTextTertiary);}
+  .prolist .pl-action .lnk{font-size:14px;}
+
+  /* 每個 panel body 內、左下角的動作列（取消/儲存），靠 panel 左緣對齊 */
+  .form-actions{display:flex;gap:8px;margin-left:0;padding-top:16px;}
+  .pc-footer{text-align:center;color:var(--colorTextTertiary);font-size:14px;padding:16px 0 24px;}
+  .pc-footer a{color:var(--colorLink);text-decoration:none;margin:0 4px;}
+
+  .view-switch{position:fixed;right:16px;bottom:16px;z-index:99;display:flex;gap:8px;background:#fff;border:1px solid var(--colorBorder);border-radius:8px;padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.12);}
+  .view-switch button{border:0;background:#f5f5f5;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:var(--fontFamily);font-size:13px;color:var(--colorTextSecondary);}
+  .view-switch button.active{background:var(--colorPrimary);color:#fff;}
+  .view{display:none;} .view.active{display:block;}
+</style>
+</head>
+<body>
+<div class="pro-layout">
+
+  <header class="pro-header">
+    <div class="pro-header__logo">
+      <img src="https://brand.echoss.vip/logo-circle.svg" alt="Echoss VIP" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+      <span class="logo-fallback">E</span><span class="title">Echoss VIP</span>
+    </div>
+    <div class="pro-header__actions">
+      <div class="lang-select"><span>語系切換</span><span class="chev">▾</span></div>
+      <div class="user-block">
+        <img class="avatar" src="https://brand.echoss.vip/logo-circle.svg" onerror="this.style.background='#1f1f1f';this.removeAttribute('src');" alt="avatar" />
+        <div class="meta"><span class="name">vipcafeadmin</span><span class="role">（品牌管理員）</span></div>
+      </div>
+      <span class="env-badge">stage</span>
+    </div>
+  </header>
+
+  <div class="pro-body">
+    <aside class="pro-sider">
+      <div class="collapse-btn" onclick="document.body.classList.toggle('collapsed')">‹</div>
+      <ul class="pro-menu">
+        <li class="selected"><a href="#"><span class="icon"><svg viewBox="64 64 896 896"><path d="M464 144H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H212V212h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H612V212h200v200zM464 544H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H212V612h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H612V612h200v200z"/></svg></span><span>功能模組</span></a></li>
+        <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896"><path d="M924.8 385.6a446.7 446.7 0 00-96-142.4 446.7 446.7 0 00-142.4-96C631.1 123.8 572.5 112 512 112s-119.1 11.8-174.4 35.2a446.7 446.7 0 00-142.4 96 446.7 446.7 0 00-96 142.4C75.8 440.9 64 499.5 64 560c0 132.7 58.3 257.7 159.9 343.1l1.7 1.4c5.8 4.8 13.1 7.5 20.6 7.5h531.7c7.5 0 14.8-2.7 20.6-7.5l1.7-1.4C901.7 817.7 960 692.7 960 560c0-60.5-11.9-119.1-35.2-174.4zM761.4 836H262.6A371.12 371.12 0 01140 560c0-99.4 38.7-192.8 109-263 70.3-70.3 163.7-109 263-109 99.4 0 192.8 38.7 263 109 70.3 70.3 109 163.7 109 263 0 105.6-44.5 205.5-122.6 276zM623.5 421.5a8.03 8.03 0 00-11.3 0L527.7 506c-18.7-5-39.4-.2-54.1 14.5a55.95 55.95 0 000 79.2 55.95 55.95 0 0079.2 0 55.87 55.87 0 0014.5-54.1l84.5-84.5c3.1-3.1 3.1-8.2 0-11.3l-28.3-28.3zM490 320h44c4.4 0 8-3.6 8-8v-80c0-4.4-3.6-8-8-8h-44c-4.4 0-8 3.6-8 8v80c0 4.4 3.6 8 8 8zm260 218v44c0 4.4 3.6 8 8 8h80c4.4 0 8-3.6 8-8v-44c0-4.4-3.6-8-8-8h-80c-4.4 0-8 3.6-8 8zm12.7-197.2l-31.1-31.1a8.03 8.03 0 00-11.3 0l-56.6 56.6a8.03 8.03 0 000 11.3l31.1 31.1c3.1 3.1 8.2 3.1 11.3 0l56.6-56.6c3.1-3.1 3.1-8.2 0-11.3zm-458.6-31.1a8.03 8.03 0 00-11.3 0l-31.1 31.1a8.03 8.03 0 000 11.3l56.6 56.6c3.1 3.1 8.2 3.1 11.3 0l31.1-31.1c3.1-3.1 3.1-8.2 0-11.3l-56.6-56.6zM262 530h-80c-4.4 0-8 3.6-8 8v44c0 4.4 3.6 8 8 8h80c4.4 0 8-3.6 8-8v-44c0-4.4-3.6-8-8-8z"/></svg></span><span>會員分析</span></a></li>
+        <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896"><path d="M858.5 763.6a374 374 0 00-80.6-119.5 375.63 375.63 0 00-119.5-80.6c-.4-.2-.8-.3-1.2-.5C719.5 518 760 444.7 760 362c0-137-111-248-248-248S264 225 264 362c0 82.7 40.5 156 102.8 201.1-.4.2-.8.3-1.2.5-44.8 18.9-85 46-119.5 80.6a375.63 375.63 0 00-80.6 119.5A371.7 371.7 0 00136 901.8a8 8 0 008 8.2h60c4.4 0 7.9-3.5 8-7.8 2-77.2 33-149.5 87.8-204.3 56.7-56.7 132-87.9 212.2-87.9s155.5 31.2 212.2 87.9C779 752.7 810 825 812 902.2c.1 4.4 3.6 7.8 8 7.8h60a8 8 0 008-8.2c-1-47.8-10.9-94.3-29.5-138.2zM512 534c-45.9 0-89.1-17.9-121.6-50.4S340 407.9 340 362c0-45.9 17.9-89.1 50.4-121.6S466.1 190 512 190s89.1 17.9 121.6 50.4S684 316.1 684 362c0 45.9-17.9 89.1-50.4 121.6S557.9 534 512 534z"/></svg></span><span>會員資料</span></a></li>
+        <li><a href="#"><span class="icon"><svg viewBox="0 0 1024 1024"><path d="M512 18.271l400.677 89.04c22.305 4.958 38.18 24.74 38.18 47.59v444.334c0 97.819-48.9 189.163-130.292 243.42L512 1019.27 203.435 842.654c-81.378-54.247-130.269-145.569-130.292-243.37V154.902c0-22.85 15.875-42.633 38.18-47.592L512 18.271zM170.667 194.01v405.226c0 65.21 32.59 126.105 86.845 162.28L512 902.095l254.488-140.58c54.241-36.166 86.828-97.039 86.845-162.231V194.009L512 118.233l-341.333 75.776zM512 268.19c44.147-0.02 82.802 29.62 94.239 72.26 11.437 42.64-7.197 87.644-45.428 109.72l-0.05 208.116h-97.523V450.17c-38.224-22.071-56.858-67.063-45.434-109.697S467.862 268.19 512 268.19z"/></svg></span><span>帳號管理</span></a></li>
+        <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896"><path d="M640.6 429.8h257.1c7.9 0 14.3-6.4 14.3-14.3V158.3c0-7.9-6.4-14.3-14.3-14.3H640.6c-7.9 0-14.3 6.4-14.3 14.3v92.9H490.6c-3.9 0-7.1 3.2-7.1 7.1v221.5h-85.7v-96.5c0-7.9-6.4-14.3-14.3-14.3H126.3c-7.9 0-14.3 6.4-14.3 14.3v257.2c0 7.9 6.4 14.3 14.3 14.3h257.1c7.9 0 14.3-6.4 14.3-14.3V544h85.7v221.5c0 3.9 3.2 7.1 7.1 7.1h135.7v92.9c0 7.9 6.4 14.3 14.3 14.3h257.1c7.9 0 14.3-6.4 14.3-14.3v-257c0-7.9-6.4-14.3-14.3-14.3h-257c-7.9 0-14.3 6.4-14.3 14.3v100h-78.6v-393h78.6v100c0 7.9 6.4 14.3 14.3 14.3zm53.5-217.9h150V362h-150V211.9zM329.9 587h-150V437h150v150zm364.2 75.1h150v150.1h-150V662.1z"/></svg></span><span>門市管理</span></a></li>
+        <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896"><path d="M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-696 72h136v656H184V184zm656 656H384V384h456v456zM384 320V184h456v136H384z"/></svg></span><span>系統設定</span></a></li>
+        <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896"><path d="M624 706.3h-74.1V464c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v242.3H400c-6.7 0-10.4 7.7-6.3 12.9l112 141.7a8 8 0 0012.6 0l112-141.7c4.1-5.2.4-12.9-6.3-12.9zM811.4 366.7C765.6 245.9 648.9 160 512.2 160S258.8 245.8 213 366.6C127.3 389.1 64 467.2 64 560c0 110.5 89.5 200 199.9 200H304c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8h-40.1c-33.7 0-65.4-13.4-89-37.7-23.5-24.2-36-56.8-34.9-90.6.9-26.4 9.9-51.2 26.2-72.1 16.7-21.3 40.1-36.8 66.1-43.7l37.9-9.9 13.9-36.6c8.6-22.8 20.6-44.1 35.7-63.4a245.6 245.6 0 0152.4-49.9c41.1-28.9 89.5-44.2 140-44.2s98.9 15.3 140 44.2c19.9 14 37.5 30.8 52.4 49.9 15.1 19.3 27.1 40.7 35.7 63.4l13.8 36.5 37.8 10C846.1 454.5 884 503.8 884 560c0 33.1-12.9 64.3-36.3 87.7a123.07 123.07 0 01-87.6 36.3H720c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h40.1C870.5 760 960 670.5 960 560c0-92.7-63.1-170.7-148.6-193.3z"/></svg></span><span>下載區</span></a></li>
+        <li><a href="#"><span class="icon"><svg viewBox="64 64 896 896"><path d="M854.6 288.6L639.4 73.4c-6-6-14.1-9.4-22.6-9.4H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V311.3c0-8.5-3.4-16.7-9.4-22.7zM790.2 326H602V137.8L790.2 326zm1.8 562H232V136h302v216a42 42 0 0042 42h216v494z"/></svg></span><span>使用手冊</span></a></li>
+      </ul>
+    </aside>
+
+    <main class="pro-content">
+
+      <!-- ============ VIEW A：L2 列表頁 ============ -->
+      <section class="view active" id="view-list">
+        <div class="pc-header">
+          <nav class="pc-breadcrumb"><span class="crumb link">功能模組</span><span class="sep">/</span><span class="crumb current link" onclick="showView('list')">範例模組</span></nav>
+          <h1 class="pc-title">範例列表</h1>
+        </div>
+        <div class="pc-tabs"><div class="tab active">分頁一</div><div class="tab">分頁二</div><div class="tab">分頁三</div></div>
+        <div class="pc-body">
+          <!-- 篩選 card -->
+          <div class="card">
+            <div class="filter-row">
+              <div class="filter-item"><label>篩選條件一</label><div class="fake-input"><span>請選擇</span><span class="chev">▾</span></div></div>
+              <div class="filter-item"><label>篩選條件二</label><div class="fake-input"><span>請輸入</span></div></div>
+              <div class="filter-item"><label>篩選條件三</label><div class="fake-input"><span>請選擇</span><span class="chev">▾</span></div></div>
+              <div class="filter-actions"><button class="btn">清 除</button><button class="btn primary">搜 尋</button></div>
+            </div>
+          </div>
+          <!-- 表格 card：table 包在 ant-card 內、card body padding 0 24 16（實測）-->
+          <div class="card">
+            <div class="card-body">
+              <div class="table-toolbar">
+                <button class="btn primary" onclick="showView('create')">＋ 新增資料</button>
+                <div class="tb-icons"><span title="重新整理">⟳</span><span title="密度">☰</span><span title="欄位設定">⚙</span></div>
+              </div>
+              <table class="pro-table">
+                <thead><tr>
+                  <th class="col-index">#</th><th>名稱（連結）</th><th>類型</th><th>狀態（Tag）</th><th>數量</th><th>完成率</th><th>啟用（Switch）</th><th>操作</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td class="col-index">1</td><td><a class="lnk">示範項目一</a></td><td>類型 A</td><td><span class="tag success">已啟用</span></td><td>128</td><td>92.50%</td><td><span class="sw"></span></td>
+                    <td><a class="lnk warning">發放</a><span class="op-sep">|</span><a class="lnk">編輯</a><span class="op-sep">|</span><a class="lnk">複製</a><span class="op-sep">|</span><a class="lnk danger">刪除</a></td></tr>
+                  <tr><td class="col-index">2</td><td><a class="lnk">示範項目二</a></td><td>類型 B</td><td><span class="tag processing">進行中</span></td><td>64</td><td>48.00%</td><td><span class="sw"></span></td>
+                    <td><a class="lnk warning">發放</a><span class="op-sep">|</span><a class="lnk">編輯</a><span class="op-sep">|</span><a class="lnk">複製</a><span class="op-sep">|</span><a class="lnk danger">刪除</a></td></tr>
+                  <tr><td class="col-index">3</td><td><a class="lnk">示範項目三</a></td><td>類型 A</td><td><span class="tag warning">即將到期</span></td><td>16</td><td>12.50%</td><td><span class="sw"></span></td>
+                    <td><a class="lnk warning">發放</a><span class="op-sep">|</span><a class="lnk">編輯</a><span class="op-sep">|</span><a class="lnk">複製</a><span class="op-sep">|</span><a class="lnk danger">刪除</a></td></tr>
+                  <tr><td class="col-index">4</td><td><a class="lnk">示範項目四</a></td><td>類型 C</td><td><span class="tag error">已停用</span></td><td>0</td><td>0.00%</td><td><span class="sw off"></span></td>
+                    <td><a class="lnk warning">發放</a><span class="op-sep">|</span><a class="lnk">編輯</a><span class="op-sep">|</span><a class="lnk">複製</a><span class="op-sep">|</span><a class="lnk danger">刪除</a></td></tr>
+                  <tr><td class="col-index">5</td><td><a class="lnk">示範項目五</a></td><td>類型 B</td><td><span class="tag default">草稿</span></td><td>—</td><td>—</td><td><span class="sw off"></span></td>
+                    <td><a class="lnk warning">發放</a><span class="op-sep">|</span><a class="lnk">編輯</a><span class="op-sep">|</span><a class="lnk">複製</a><span class="op-sep">|</span><a class="lnk danger">刪除</a></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ VIEW B：L3 內容頁（獨立 panel） ============ -->
+      <section class="view" id="view-create">
+        <div class="pc-header">
+          <nav class="pc-breadcrumb"><span class="crumb link">功能模組</span><span class="sep">/</span><span class="crumb link" onclick="showView('list')">範例模組</span><span class="sep">/</span><span class="crumb current">新增範例</span></nav>
+          <h1 class="pc-title">新增範例</h1>
+          <div class="pc-subtitle">欄位標題即對應的 <code>@ant-design/pro-components</code> 元件名稱，可直接複製呼叫該元件。</div>
+        </div>
+        <div class="pc-body">
+
+          <!-- Panel 0：基本資料（多控件示範） -->
+          <div class="panel">
+            <div class="panel-head">基本資料</div>
+            <div class="panel-body">
+              <div class="form-item"><div class="fi-label code"><span class="req">*</span>ProFormRadio.Group<small>optionType: button</small></div><div class="fi-control"><div class="radio-group"><span class="rb checked">選項一</span><span class="rb">選項二</span><span class="rb">選項三</span></div></div></div>
+              <div class="form-item"><div class="fi-label code"><span class="req">*</span>ProFormText</div><div class="fi-control"><div class="ipt">請輸入示範名稱</div></div></div>
+              <div class="form-item"><div class="fi-label code">ProFormRadio.Group</div><div class="fi-control"><div class="radio-list"><span class="r checked"><span class="dot"></span>啟用</span><span class="r"><span class="dot"></span>停用</span></div></div></div>
+              <div class="form-item"><div class="fi-label code">ProFormSelect</div><div class="fi-control"><div class="ipt w-mid"><span>請選擇分類</span><span class="chev">▾</span></div></div></div>
+              <div class="form-item"><div class="fi-label code">ProFormDatePicker</div><div class="fi-control"><div class="ipt w-mid filled"><span>2026-08-14</span><span class="cal">📅</span></div></div></div>
+              <div class="form-item"><div class="fi-label code">ProFormDateRangePicker</div><div class="fi-control"><div class="ipt filled" style="max-width:360px"><span>2026-08-14　→　2026-09-14</span><span class="cal">📅</span></div></div></div>
+              <div class="form-item"><div class="fi-label code">ProForm.Item<small>ReactQuill · Quill snow</small></div><div class="fi-control"><div class="rte"><div class="rte-bar"><span>Normal</span><span>14px</span><span>B</span><span>I</span><span>U</span><span>S</span><span>❝</span><span>≣</span><span>🔗</span><span>🖼</span></div><div class="rte-area">請輸入示範內容</div></div></div></div>
+              <div class="form-item"><div class="fi-label code">ProFormUploadButton</div><div class="fi-control"><div class="uploader"><span class="plus">＋</span><span>上傳</span></div><div class="extra">建議尺寸：288 x 288 pixel　建議格式：JPG 或 PNG</div></div></div>
+              <div class="form-actions"><button class="btn">取 消</button><button class="btn primary">儲 存</button></div>
+            </div>
+          </div>
+
+          <!-- Panel 1：儲值面額與限制（ProFormList，參考 wallet-settings 截圖） -->
+          <div class="panel">
+            <div class="panel-head">儲值面額與限制</div>
+            <div class="panel-body">
+              <div class="form-item"><div class="fi-label code"><span class="req">*</span>ProFormList<small>item：ProFormText / ProFormDigit</small></div>
+                <div class="fi-control">
+                  <div class="pfl-row">
+                    <div class="amt"><div class="ipt2 filled">100</div></div>
+                    <div class="tagn"><div class="ipt2 ph">標籤（選填）</div></div>
+                    <div class="ic" title="顯示中，點擊隱藏"><svg viewBox="64 64 896 896"><path d="M942.2 486.2C847.4 286.5 704.1 186 512 186c-192.2 0-335.4 100.5-430.2 300.3a60.3 60.3 0 000 51.5C176.6 737.5 319.9 838 512 838c192.2 0 335.4-100.5 430.2-300.3 7.7-16.2 7.7-35 0-51.5zM512 766c-161.3 0-279.4-81.8-362.7-254C232.6 339.8 350.7 258 512 258c161.3 0 279.4 81.8 362.7 254C791.5 684.2 673.4 766 512 766zm-4-430c-97.2 0-176 78.8-176 176s78.8 176 176 176 176-78.8 176-176-78.8-176-176-176zm0 288c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112z"/></svg></div>
+                    <div class="ic del" title="刪除"><svg viewBox="64 64 896 896"><path d="M360 184h-8c4.4 0 8-3.6 8-8v8h304v-8c0 4.4 3.6 8 8 8h-8v72h72v-80c0-35.3-28.7-64-64-64H352c-35.3 0-64 28.7-64 64v80h72v-72zm504 72H160c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h60.4l24.7 523c1.6 34.1 29.8 61 63.9 61h454c34.2 0 62.3-26.8 63.9-61l24.7-523H888c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM731.3 840H292.7l-24.2-512h487l-24.2 512z"/></svg></div>
+                  </div>
+                  <div class="pfl-row">
+                    <div class="amt"><div class="ipt2 filled">500</div></div>
+                    <div class="tagn"><div class="ipt2 filled">最超值</div></div>
+                    <div class="ic" title="顯示中，點擊隱藏"><svg viewBox="64 64 896 896"><path d="M942.2 486.2C847.4 286.5 704.1 186 512 186c-192.2 0-335.4 100.5-430.2 300.3a60.3 60.3 0 000 51.5C176.6 737.5 319.9 838 512 838c192.2 0 335.4-100.5 430.2-300.3 7.7-16.2 7.7-35 0-51.5zM512 766c-161.3 0-279.4-81.8-362.7-254C232.6 339.8 350.7 258 512 258c161.3 0 279.4 81.8 362.7 254C791.5 684.2 673.4 766 512 766zm-4-430c-97.2 0-176 78.8-176 176s78.8 176 176 176 176-78.8 176-176-78.8-176-176-176zm0 288c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112z"/></svg></div>
+                    <div class="ic del" title="刪除"><svg viewBox="64 64 896 896"><path d="M360 184h-8c4.4 0 8-3.6 8-8v8h304v-8c0 4.4 3.6 8 8 8h-8v72h72v-80c0-35.3-28.7-64-64-64H352c-35.3 0-64 28.7-64 64v80h72v-72zm504 72H160c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h60.4l24.7 523c1.6 34.1 29.8 61 63.9 61h454c34.2 0 62.3-26.8 63.9-61l24.7-523H888c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM731.3 840H292.7l-24.2-512h487l-24.2 512z"/></svg></div>
+                  </div>
+                  <div class="pfl-row">
+                    <div class="amt"><div class="ipt2 filled">1000</div></div>
+                    <div class="tagn"><div class="ipt2 ph">標籤（選填）</div></div>
+                    <div class="ic hidden" title="已隱藏，點擊顯示"><svg viewBox="64 64 896 896"><path d="M942.2 486.2Q889.5 375.1 816.7 305l-50.9 50.9C807.3 395.5 843.5 447.4 874.7 512 791.5 684.2 673.4 766 512 766q-72.7 0-133.9-22.4L323 798.8Q408 838 512 838q288.3 0 430.2-300.3a60.3 60.3 0 000-51.5zm-63.6-320.6L836 122.9a8 8 0 00-11.3 0L715.3 232.2Q624.9 186 512 186q-288.3 0-430.2 300.3a60.3 60.3 0 000 51.5q56.7 119.4 136.5 191.4L112.5 835a8 8 0 000 11.3L155.2 889a8 8 0 0011.3 0l712.1-712.1a8 8 0 000-11.4zM149.3 512C232.6 339.8 350.7 258 512 258q66.3 0 121.9 22.7l-52.8 52.8a176 176 0 00-248.4 248.4l-63.7 63.7Q222.5 585.7 149.3 512zm215.7 0a112.1 112.1 0 01146.2-106.7L365 553.2A112 112 0 01365 512z"/></svg></div>
+                    <div class="ic del" title="刪除"><svg viewBox="64 64 896 896"><path d="M360 184h-8c4.4 0 8-3.6 8-8v8h304v-8c0 4.4 3.6 8 8 8h-8v72h72v-80c0-35.3-28.7-64-64-64H352c-35.3 0-64 28.7-64 64v80h72v-72zm504 72H160c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h60.4l24.7 523c1.6 34.1 29.8 61 63.9 61h454c34.2 0 62.3-26.8 63.9-61l24.7-523H888c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM731.3 840H292.7l-24.2-512h487l-24.2 512z"/></svg></div>
+                  </div>
+                  <button class="btn dashed pfl-addbtn">＋ 新增儲值面額</button>
+                </div>
+              </div>
+              <div class="form-actions"><button class="btn">取 消</button><button class="btn primary">儲 存</button></div>
+            </div>
+          </div>
+
+          <!-- Panel 2：發點規則 + 集點加碼（合併為一個 panel；兩者皆以 form-item 格式呈現） -->
+          <div class="panel">
+            <div class="panel-head">集點加碼</div>
+            <div class="panel-body">
+              <!-- form-item：發點規則（label 在左、內容列在右） -->
+              <div class="form-item"><div class="fi-label code">ProForm.Group<small>各等級 · item：ProFormDigit</small></div>
+                <div class="fi-control">
+                  <div class="rule-row"><span class="lvl">無卡會員</span><span class="mid">消費滿</span><div class="ipt3">100</div><span class="mid">元獲得一點</span></div>
+                  <div class="rule-row"><span class="lvl">等級一</span><span class="mid">消費滿</span><div class="ipt3">100</div><span class="mid">元獲得一點</span></div>
+                  <div class="rule-row"><span class="lvl">等級二</span><span class="mid">消費滿</span><div class="ipt3">50</div><span class="mid">元獲得一點</span></div>
+                  <div class="rule-row"><span class="lvl">等級三</span><span class="mid">消費滿</span><div class="ipt3">20</div><span class="mid">元獲得一點</span></div>
+                  <div class="rule-row" style="margin-bottom:0"><span class="lvl">等級四</span><span class="mid">消費滿</span><div class="ipt3 ph">請輸入</div><span class="mid">元獲得一點</span></div>
+                </div>
+              </div>
+              <!-- form-item：各等級加碼設定（ProList） -->
+              <div class="form-item" style="margin-bottom:8px"><div class="fi-label code">ProList</div>
+                <div class="fi-control">
+                  <div class="prolist">
+                    <div class="pl-item"><div class="pl-meta"><div class="pl-title">無卡會員</div><div class="pl-desc">限時加碼（示範說明）</div></div><div class="pl-action"><a class="lnk">設定</a></div></div>
+                    <div class="pl-item"><div class="pl-meta"><div class="pl-title">等級一</div><div class="pl-desc">壽星加碼／會員加碼／限時加碼（示範說明）</div></div><div class="pl-action"><a class="lnk">設定</a></div></div>
+                    <div class="pl-item"><div class="pl-meta"><div class="pl-title">等級二</div><div class="pl-desc">壽星加碼／會員加碼／限時加碼（示範說明）</div></div><div class="pl-action"><a class="lnk">設定</a></div></div>
+                    <div class="pl-item"><div class="pl-meta"><div class="pl-title">等級三</div><div class="pl-desc">壽星加碼／限時加碼（示範說明）</div></div><div class="pl-action"><a class="lnk">設定</a></div></div>
+                    <div class="pl-item"><div class="pl-meta"><div class="pl-title">等級四</div><div class="pl-desc">壽星加碼／限時加碼（示範說明）</div></div><div class="pl-action"><a class="lnk">設定</a></div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-actions"><button class="btn">取 消</button><button class="btn primary">儲 存</button></div>
+            </div>
+          </div>
+
+          <div class="pc-footer">Copyright © 2026 <a>睿鼎數位股份有限公司</a> · <a>使用條款</a> · <a>隱私權政策</a></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  // 導覽：點 breadcrumb「範例模組」→ L2 列表頁；點 L2「新增資料」→ L3 內容頁
+  function showView(v){
+    document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
+    document.getElementById('view-'+v).classList.add('active');
+    window.scrollTo(0,0);
+  }
+</script>
+</body>
+</html>
