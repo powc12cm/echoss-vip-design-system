@@ -10,10 +10,10 @@ Echoss VIP 開發團隊的 UI 設計系統規範，基於 Ant Design v5 + @ant-d
 
 - **Design Tokens** — 色碼、字型、間距、圓角完整對照表
 - **Color Palette** — Primary / Warning / Error / Info 各 10 階色盤
-- **元件規範** — Button、Tag、Switch、Radio、Form、Table（含**項次欄**）統一用法
-- **應用框架 Layout** — ProLayout `layout="mix"`：Header + Sider 的實測參數、props 對照、選單 icon 對應（含 iconfont）
-- **列表頁 Layout** — PageContainer + breadcrumb 三層規則、篩選/表格雙 card、ProTable 工具列（新增鈕靠右）
-- **內容頁 Layout** — 獨立 Panel（ProCard）+ ProForm form-item 格式 + 每個 panel 各自的動作列
+- **元件規範** — Button、Tag（不帶 icon）、Switch、Radio（Radio.Button / Radio.Group / Switch 使用時機，選中態 outline）、Form、Table（含**項次欄**、**可展開列**、操作欄 taxonomy 四色）、Badge（狀態一律用狀態點）統一用法
+- **應用框架 Layout** — ProLayout `layout="mix"`：Header + Sider 的實測參數、props 對照、選單 icon 對應（含 iconfont）；版面三層 Layout ⊃ Container ⊃ Card（ProCard ≠ antd Card）
+- **列表頁 Layout** — PageContainer + breadcrumb 三層規則、篩選/表格雙 card、QueryFilter（col-6、進階/基本搜尋收合、>6 欄改 form modal）、ProTable 工具列（新增鈕靠右）
+- **內容頁 Layout** — 獨立 Panel（ProCard）+ ProForm form-item 格式（label 188、間距 24）+ 整頁共用一組「取消/儲存」置於所有 panel 之外、容器左下角
 - **欄位元件命名對照** — 內容頁欄位標題＝對應的 `@ant-design/pro-components` 元件名，供同仁複製呼叫
 - **ConfigProvider 設定** — 前端直接複製套用的 `echossTheme`
 - **Claude Prompt 模板** — PM 開新對話直接貼上使用
@@ -22,7 +22,7 @@ Echoss VIP 開發團隊的 UI 設計系統規範，基於 Ant Design v5 + @ant-d
 ## 檔案結構
 
 - `SKILL.md` — 設計系統規範主檔（Claude 上共用）
-- `index.html` — 視覺展示頁（色彩／Token／元件／Layout 預覽）
+- `index.html` — 視覺展示頁（Foundation / Framework / Component / 應用案例 預覽）
 - `references/layout-shell.html` — 後台外框 Layout（mix）完整可貼骨架（Header + Sider）；`index.html` 以 iframe 內嵌預覽
 - `references/content-layouts.html` — 列表頁（L2）＋ 新增內容頁（L3）完整可貼骨架（PageContainer / ProTable 項次欄 / ProForm 獨立 panel）
 
@@ -45,7 +45,7 @@ import { echossTheme } from './theme/echoss-theme';
 </ConfigProvider>
 ```
 
-列表頁 / 內容頁依「列表頁 Layout」「內容頁 Layout」章節：列表用 `PageContainer` + `ProTable`（最左側加 `valueType:'index'` 項次欄、`toolBarRender` 新增鈕靠右）；新增/編輯頁用 `PageContainer` + 多個獨立 `ProCard` panel + `ProForm`（form-item 格式，每個 panel 各自的取消/儲存動作列）。
+列表頁 / 內容頁依「列表頁 Layout」「內容頁 Layout」章節：列表用 `PageContainer` + `ProTable`（最左側加 `valueType:'index'` 項次欄、`toolBarRender` 新增鈕靠右、需查看單筆明細用 `expandable`）；新增/編輯頁用 `PageContainer` + 多個獨立 `ProCard` panel + `ProForm`（form-item 格式；panel 本身不放按鈕，整頁共用一組「取消/儲存」置於所有 panel 之外、容器左下角）。
 
 ### 設計師維護更新
 
@@ -66,6 +66,7 @@ import { echossTheme } from './theme/echoss-theme';
 
 ## 版本
 
+- **v1.3** — 2026-10-02　Component / 應用案例校準成果定案為單一標準：色彩 `#07C373`/`#FCB321`/`#FF4D4F` 唯一化；Radio.Button 選中態 outline、狀態改用 Badge、Tag 不帶 icon；Table 操作欄 no-icon/四色/`|`、項次欄寬 56、新增可展開列（expandable）、狀態欄 Badge、複製連結欄；新增版面三層（ProCard ≠ antd Card）、QueryFilter 規則、內容頁共用動作列（panel 外）、ProDescriptions / 多選 / picture-card
 - **v1.2** — 2026-08-14　合併發布：新增「應用框架 Layout（ProLayout mix）」章節與展示頁、底色 token 修正（`colorBgLayout` → `#F5F5F5`、新增 `colorSplit`、header/sider 透明）；並併入頁面層規範——Table 項次欄、breadcrumb 三層、列表頁／內容頁 Layout、欄位元件命名對照、新增 `references/content-layouts.html`
 - **v1.1** — 2026-07-06　Table 操作連結 taxonomy 正式化
 - **v1.0** — 2026-05-25　初始發佈

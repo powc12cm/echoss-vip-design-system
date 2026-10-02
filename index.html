@@ -958,8 +958,7 @@ const {
   FilterOutlined, WarningOutlined, StopOutlined, CrownOutlined, GiftOutlined, TrophyOutlined,
   TagOutlined, CalendarOutlined, ClockCircleOutlined, PhoneOutlined, MailOutlined,
   ArrowUpOutlined, ArrowDownOutlined, EllipsisOutlined, MenuOutlined, AppstoreOutlined,
-  FileOutlined, StarFilled, QuestionCircleOutlined,
-  LayoutOutlined, DashboardOutlined, PartitionOutlined, CloudDownloadOutlined
+  FileOutlined, StarFilled, QuestionCircleOutlined
 } = icons;
 
 const { Title, Text, Paragraph, Link } = Typography;
@@ -969,12 +968,12 @@ const echossTheme = {
   token: {
     colorPrimary: '#07C373', colorLink: '#1BAA6D', colorSuccess: '#07C373',
     colorWarning: '#FCB321', colorError: '#FF4D4F', colorInfo: '#1A9CFF',
-    colorBgLayout: '#F5F5F5', colorBorder: '#D9D9D9', colorSplit: '#f0f0f0',
+    colorBgLayout: '#F8F9FA', colorBorder: '#D9D9D9',
     fontFamily: "'Noto Sans TC', sans-serif",
     fontSize: 14, borderRadius: 6, borderRadiusLG: 8, borderRadiusSM: 4,
     controlHeight: 32, controlHeightLG: 40, controlHeightSM: 24,
   },
-  components: { Layout: { siderBg: 'transparent', headerBg: 'transparent' } }
+  components: { Layout: { siderBg: '#fff', headerBg: '#fff' } }
 };
 
 function h(type, props) {
@@ -1008,6 +1007,349 @@ function Demo(props) {
   );
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+//  v4 新增：pro-components 標註 (ProNote) 與「應用案例」分頁 (Showcase)
+//  資料來源：stage-brand.echoss.vip 實測（powchuang, 2026-09）
+//  色彩基準：設計系統 token（#07C373 / #FCB321 / #FF4D4F）
+//  實測後台差異已於各 ProNote / 使用說明中標註
+// ═══════════════════════════════════════════════════════════════
+var CG = '#07C373', CG_ACT = '#009c5d', CGOLD = '#FCB321', CRED = '#FF4D4F';
+var CSPLIT = '#f0f0f0', CBORDER = '#d9d9d9', CTT = 'rgba(0,0,0,.45)';
+var Ic = function (name, props) { var C = icons[name]; return C ? h(C, props) : null; };
+
+// ── pro-components 標註方塊（放在既有元件 section 內補充）──
+function ProNote(props) {
+  var notes = props.notes || [];
+  var warn = props.warn || [];
+  return h('div', { style: { border: '1px solid #b7eb8f', background: '#f6ffed', borderLeft: '3px solid ' + CG, borderRadius: 8, padding: '14px 16px', marginBottom: 16 } },
+    h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: props.imp ? 10 : 8, flexWrap: 'wrap' } },
+      h(Tag, { color: 'success', style: { margin: 0, fontFamily: 'monospace', fontSize: 11 } }, '@ant-design/pro-components'),
+      h(Text, { strong: true, style: { fontSize: 14, color: CG_ACT } }, props.name)
+    ),
+    props.imp ? h('pre', { style: { margin: '0 0 10px', background: '#fff', border: '1px solid #d9f7be', borderRadius: 6, padding: '8px 10px', fontSize: 12, fontFamily: 'monospace', overflowX: 'auto', color: '#00754a', whiteSpace: 'pre' } }, props.imp) : null,
+    h(Space, { direction: 'vertical', size: 5, style: { width: '100%' } },
+      notes.map(function (n, i) {
+        return h('div', { key: i, style: { fontSize: 13, lineHeight: 1.65 } },
+          Array.isArray(n)
+            ? h('span', null, h(Text, { strong: true, style: { color: '#00754a' } }, n[0] + '：'), h(Text, null, n[1]))
+            : h(Text, null, '· ' + n)
+        );
+      })
+    ),
+    warn.length ? h('div', { style: { marginTop: 10, paddingTop: 10, borderTop: '1px dashed #d9f7be' } },
+      warn.map(function (w, i) {
+        return h('div', { key: i, style: { fontSize: 12.5, color: '#8a4e00', lineHeight: 1.65 } },
+          h(WarningOutlined, { style: { color: CGOLD, marginRight: 6 } }), w);
+      })
+    ) : null
+  );
+}
+
+// ── 使用說明：規範列 / 規範群組 ──
+function SpecRule(props) {
+  return h('div', { style: { display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px dashed ' + CSPLIT, alignItems: 'flex-start' } },
+    h(Tag, { color: props.warn ? 'warning' : 'success', style: { margin: 0, fontFamily: 'monospace', fontWeight: 600, flexShrink: 0, minWidth: 40, textAlign: 'center' } }, props.id),
+    h('div', { style: { fontSize: 13.5, lineHeight: 1.7 } }, props.children)
+  );
+}
+function SpecGroup(props) {
+  return h(Card, { size: 'small', style: { marginBottom: 16 }, title: h(Space, null, props.icon, h(Text, { strong: true }, props.title)) },
+    props.children
+  );
+}
+
+// ── 模擬介面外框（模擬後台 content 區底色與內距）──
+function MockShell(props) {
+  return h('div', { style: { background: 'linear-gradient(#ffffff, #f5f5f5 40%)', padding: '8px 40px 24px', minHeight: 420 } }, props.children);
+}
+function MockBreadcrumb(items) {
+  return h(Breadcrumb, { style: { fontSize: 14, margin: '8px 0 4px' }, items: items.map(function (t) { return { title: t }; }) });
+}
+function MockTitle(t) {
+  return h('div', { style: { fontSize: 20, fontWeight: 600, color: 'rgba(0,0,0,.88)', margin: '0 0 16px', paddingTop: 4 } }, t);
+}
+
+// ════════ 總覽頁模擬（依 /features/promotional/points）════════
+// QueryFilter col-6（一列 3 輸入欄 + 按鈕欄）；超過一列以「進階搜尋 / 基本搜尋」收合
+function OverviewMock() { return h(OverviewMockInner); }
+function OverviewMockInner() {
+  var st = React.useState(false); var advOpen = st[0], setAdv = st[1];
+  var qfItem = function (label, ctrl) {
+    return h('div', null,
+      h('div', { style: { fontSize: 14, marginBottom: 6, color: 'rgba(0,0,0,.88)' } }, label),
+      ctrl
+    );
+  };
+  var data = [
+    { key: '1', name: '點數限制', type: '續會點數', amount: 30000015, enabled: true, send: false },
+    { key: '2', name: '續會禮', type: '續會點數', amount: 45, enabled: true, send: false },
+    { key: '3', name: '20260304測試優惠點數推播', type: '優惠點數', amount: 15, enabled: true, send: true },
+    { key: '4', name: '20260304測試升等禮推播', type: '升等禮', amount: 19, enabled: true, send: false },
+    { key: '5', name: '20260304測試生日禮推播', type: '生日禮', amount: 41, enabled: true, send: false }
+  ];
+  var columns = [
+    { title: '#', dataIndex: 'idx', width: 56, align: 'left', render: function (_, __, i) { return i + 1; } },
+    { title: '名稱', dataIndex: 'name', ellipsis: true, render: function (t) { return h('a', { style: { color: CG } }, t); } },
+    { title: '類型', dataIndex: 'type', width: 120 },
+    { title: '發放量', dataIndex: 'amount', width: 130, sorter: true, sortOrder: false, render: function (v) { return v.toLocaleString(); } },
+    { title: '啟用', dataIndex: 'enabled', width: 90, render: function (v) { return h(Switch, { size: 'small', defaultChecked: v }); } },
+    { title: '發送', dataIndex: 'send', width: 110, render: function (v) { return v ? h('a', { style: { color: CG, whiteSpace: 'nowrap' } }, h(Space, { size: 4 }, '連結', Ic('CopyOutlined', { style: { fontSize: 13 } }))) : null; } },
+    { title: '操作', key: 'op', width: 200, render: function () { return h(Space, { split: h('span', { style: { color: CBORDER } }, '|'), size: 12, style: { whiteSpace: 'nowrap' } }, h('a', { style: { color: CGOLD } }, '發點'), h('a', { style: { color: CG } }, '編輯'), h('a', { style: { color: CRED } }, '刪除')); } }
+  ];
+  var cols = [
+    h(Col, { span: 6, key: 'f1' }, qfItem('啟用狀態', h(Select, { defaultValue: 'on', style: { width: '100%' }, options: [{ value: 'on', label: '啟用中' }, { value: 'off', label: '已停用' }] }))),
+    h(Col, { span: 6, key: 'f2' }, qfItem('名稱', h(Input, { placeholder: '請輸入' }))),
+    h(Col, { span: 6, key: 'f3' }, qfItem('類型', h(Select, { placeholder: '請選擇', allowClear: true, style: { width: '100%' }, options: [{ value: 'a', label: '續會點數' }, { value: 'b', label: '優惠點數' }] })))
+  ];
+  if (advOpen) {
+    cols.push(h(Col, { span: 6, key: 'f4' }, qfItem('建立日期', h(antd.DatePicker.RangePicker, { style: { width: '100%' } }))));
+    cols.push(h(Col, { span: 6, key: 'f5' }, qfItem('標籤', h(Select, { mode: 'multiple', placeholder: '請選擇', style: { width: '100%' }, options: [{ value: 't1', label: 'VIP' }, { value: 't2', label: '新會員' }] }))));
+  }
+  cols.push(h(Col, { span: 6, key: 'btn', style: { display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' } },
+    h(Space, null,
+      h(Button, null, '清除'),
+      h(Button, { type: 'primary' }, '搜尋'),
+      h('a', { style: { color: CG, whiteSpace: 'nowrap' }, onClick: function () { setAdv(!advOpen); } }, advOpen ? h(Space, { size: 4 }, '基本搜尋', h(UpOutlined, { style: { fontSize: 11 } })) : h(Space, { size: 4 }, '進階搜尋', h(DownOutlined, { style: { fontSize: 11 } })))
+    )));
+  return h(MockShell, null,
+    MockBreadcrumb(['功能模組', '優惠模組']),
+    MockTitle('優惠點數'),
+    h(Tabs, { defaultActiveKey: 'points', style: { marginBottom: 16 }, items: [
+      { key: 'ticket', label: '優惠票券' }, { key: 'points', label: '優惠點數' }, { key: 'gift', label: '禮包組合' }
+    ] }),
+    // 篩選 container（QueryFilter，col-6，5 欄位可展開）
+    h(Card, { style: { marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }, styles: { body: { padding: 24 } } },
+      h(Row, { gutter: 24, style: { rowGap: 24 } }, cols)
+    ),
+    // 表格 container（ProTable）
+    h(Card, { style: { boxShadow: '0 1px 3px rgba(0,0,0,.06)' }, styles: { body: { padding: '0 24px 16px' } } },
+      h('div', { style: { display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, padding: '16px 0' } },
+        h(Button, { type: 'primary', icon: h(PlusOutlined) }, '新增點數'),
+        h(Button, { type: 'text', icon: h(ReloadOutlined) }),
+        h(Button, { type: 'text', icon: Ic('ColumnHeightOutlined') }),
+        h(Button, { type: 'text', icon: h(SettingOutlined) })
+      ),
+      h(Table, { columns: columns, dataSource: data, size: 'middle', pagination: { total: 32, pageSize: 10, current: 1, showSizeChanger: true, size: 'default' } })
+    )
+  );
+}
+
+// ════════ 編輯頁模擬（依 /features/member_cards/card/update 等內容頁）════════
+// editItem: label 可為字串或節點（帶 tooltip 時傳節點）
+function EditMock() {
+  // 規範：form-item margin-bottom 24；label 與控件皆在 32px 高的列內（單行控件垂直置中對齊 label）
+  var editItem = function (label, ctrl, opts) {
+    opts = opts || {};
+    return h('div', { style: { display: 'flex', marginBottom: 24, alignItems: 'flex-start' } },
+      h('div', { style: { width: 188, flexShrink: 0, textAlign: 'right', paddingRight: 12, fontSize: 14, color: 'rgba(0,0,0,.88)', minHeight: 32, lineHeight: '32px' } },
+        opts.req ? h('span', { style: { color: CRED, marginRight: 4 } }, '*') : null, label),
+      h('div', { style: { flex: 1, maxWidth: 680 } },
+        opts.block ? ctrl : h('div', { style: { minHeight: 32, display: 'flex', alignItems: 'center' } }, ctrl),
+        opts.help ? h('div', { style: { fontSize: 14, color: CTT, marginTop: 6 } }, opts.help) : null)
+    );
+  };
+  var tipLabel = function (text, tip) { return h(Space, { size: 4 }, text, h(Tooltip, { title: tip }, h(InfoCircleOutlined, { style: { color: 'rgba(0,0,0,.45)' } }))); };
+  var divider = h('div', { style: { borderTop: '1px solid ' + CSPLIT, margin: '0 0 24px' } });
+  var panel = function (title, children) { return h(Card, { title: h(Text, { strong: true, style: { fontSize: 16 } }, title), style: { borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,.06)', marginBottom: 16 }, styles: { body: { padding: '16px 24px' } } }, children); };
+  var uploadEmpty = h('div', { style: { width: 104, height: 104, borderRadius: 8, border: '1px dashed ' + CBORDER, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: CTT, cursor: 'pointer', background: '#fafafa' } },
+    h(PlusOutlined, { style: { fontSize: 18 } }), h('div', { style: { fontSize: 12, marginTop: 6 } }, '上傳'));
+
+  // 條件卡（自動化行銷）
+  var amCard = function (idx) {
+    return h('div', { style: { border: '1px solid ' + CSPLIT, borderRadius: 8, marginBottom: 16 } },
+      h('div', { style: { display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid ' + CSPLIT } },
+        h(Text, { strong: true }, '條件' + idx),
+        h('span', { style: { marginLeft: 'auto', cursor: 'pointer' } }, h(DeleteOutlined, { style: { color: CRED } }))
+      ),
+      h('div', { style: { padding: 16 } },
+        h(Space, { align: 'center', wrap: true, style: { marginBottom: 24 } }, h(Text, null, '條件內容'),
+          h(Radio.Group, { optionType: 'button', defaultValue: 'a', options: [{ label: '總消費金額', value: 'a' }, { label: '單次消費金額', value: 'b' }, { label: '消費次數', value: 'c' }, { label: '購買品項', value: 'd' }] })),
+        h(Space, { align: 'center' }, h(Text, null, '總消費金額'), h(antd.InputNumber, { placeholder: '請輸入', controls: false, style: { width: 140 } }), h(Text, null, '元 以上'))
+      )
+    );
+  };
+
+  var stores = [
+    { value: 's1', label: '信義旗艦店' }, { value: 's2', label: '西門町店' }, { value: 's3', label: '南港車站店' },
+    { value: 's4', label: '板橋中山店' }, { value: 's5', label: '台中中港店' }, { value: 's6', label: '高雄夢時代店' }, { value: 's7', label: '新竹巨城店' }
+  ];
+
+  return h(MockShell, null,
+    MockBreadcrumb(['功能模組', '會員卡', '編輯會員等級']),
+    MockTitle('一般會員'),
+
+    // ── Panel 1：編輯會員卡 ──
+    panel('編輯會員卡', [
+      editItem('等級名稱', h(Input, { defaultValue: 'LV1 Basic Member', allowClear: true, style: { maxWidth: 320 } }), { key: 'a', req: true }),
+      h('div', { key: 'b' }, editItem(tipLabel('卡片圖片', '建議上傳 1024×640 的卡面圖片'), uploadEmpty, { block: true })),
+      h('div', { key: 'c' }, divider),
+      h('div', { key: 'd' }, editItem('會籍效期', h(Select, { defaultValue: 'forever', style: { width: 200 }, options: [{ value: 'forever', label: '無期限' }, { value: 'year', label: '一年' }] }))),
+      h('div', { key: 'e' }, divider),
+      h('div', { key: 'f' }, editItem('升等條件',
+        h('div', null,
+          h(Space, { align: 'center', wrap: true, style: { marginBottom: 24 } }, '條件一：等級內累積消費', h(antd.InputNumber, { placeholder: '1000', controls: false, style: { width: 110 } }), '元'),
+          h(Space, { align: 'center', wrap: true }, '條件二：等級內消費次數達', h(antd.InputNumber, { placeholder: '2', controls: false, style: { width: 80 } }), '次，且每次金額達', h(antd.InputNumber, { placeholder: '500', controls: false, style: { width: 100 } }), '元')
+        ), { req: true, block: true, help: '升等條件一與條件二，至少需設定一項' })),
+      h('div', { key: 'g' }, editItem('升等發送推播訊息', h(Radio.Group, { defaultValue: 'y', options: [{ label: '是', value: 'y' }, { label: '否', value: 'n' }] })))
+    ]),
+
+    // ── Panel 2：集點設定 ──
+    panel('集點設定', [
+      editItem('會員卡集點功能', h(Switch, { defaultChecked: true }), { key: 'a' }),
+      h('div', { key: 'b' }, editItem('是否顯示於前台', h(Radio.Group, { defaultValue: 'y', options: [{ label: '是', value: 'y' }, { label: '否', value: 'n' }] }))),
+      h('div', { key: 'c' }, editItem('點數權益', h(Input.TextArea, { rows: 3, style: { width: 560 }, placeholder: '請輸入點數權益說明' }), { block: true })),
+      h('div', { key: 'd' }, editItem(tipLabel('發點規則', '各等級設定消費滿額獲得點數的規則'),
+        h('div', null,
+          [['一般會員'], ['銀卡'], ['金卡']].map(function (lv, i) { return h(Space, { key: i, align: 'center', style: { display: 'flex', marginBottom: i < 2 ? 24 : 0 } }, h(Text, { style: { display: 'inline-block', width: 72 } }, lv[0]), '消費滿', h(antd.InputNumber, { placeholder: '100', controls: false, style: { width: 100 } }), '元獲得 1 點'); })
+        ), { block: true })),
+      h('div', { key: 'e' }, editItem('點數兌換期限',
+        h('div', null,
+          h(Radio.Group, { optionType: 'button', defaultValue: 'custom', options: [{ label: '無期限', value: 'none' }, { label: '自訂期限', value: 'custom' }] }),
+          h('div', { style: { marginTop: 24 } },
+            h(Space, { align: 'center', size: 8, style: { display: 'flex', marginBottom: 24 } }, h(Text, null, '自發點日起'), h(antd.InputNumber, { placeholder: '1', controls: false, style: { width: 80 } }), h(Select, { defaultValue: 'y', style: { width: 80 }, options: [{ value: 'y', label: '年' }, { value: 'm', label: '月' }, { value: 'd', label: '日' }] }), h(Text, null, '後到期')),
+            h(Space, { align: 'center', size: 8, style: { display: 'flex' } }, h(Text, null, '兌換截止日'), h(antd.DatePicker, { style: { width: 160 } }))
+          )
+        ), { block: true })),
+      h('div', { key: 'f' }, editItem('點數兌換門市',
+        h('div', null,
+          h(Radio.Group, { optionType: 'button', defaultValue: 'spec', options: [{ label: '不指定', value: 'none' }, { label: '指定門市', value: 'spec' }] }),
+          h('div', { style: { marginTop: 24 } }, h(Select, { mode: 'multiple', placeholder: '請選擇門市', style: { width: 400 }, defaultValue: ['s1', 's2'], options: stores }))
+        ), { block: true }))
+    ]),
+
+    // ── Panel 3：集點加碼 ──
+    panel('集點加碼', [
+      editItem('加碼累計', h(Radio.Group, { defaultValue: 'on', options: [{ label: '開啟', value: 'on' }, { label: '關閉', value: 'off' }] }), { key: 'a' }),
+      h('div', { key: 'b' }, editItem('各等級加碼設定',
+        h(List, { itemLayout: 'horizontal', style: { maxWidth: 560, border: '1px solid ' + CSPLIT, borderRadius: 8, padding: '0 16px' },
+          dataSource: [{ t: '一般會員', d: '消費加碼 1.0 倍' }, { t: '銀卡', d: '消費加碼 1.2 倍' }, { t: '金卡', d: '消費加碼 1.5 倍' }],
+          renderItem: function (it) { return h(List.Item, { actions: [h('a', { style: { color: CG } }, '設定')] }, h(List.Item.Meta, { title: it.t, description: it.d })); } }), { block: true }))
+    ]),
+
+    // ── Panel 4：自動化行銷 ──
+    panel('自動化行銷', [
+      editItem('觸發條件', h('div', null, amCard('一'), amCard('二'), h(Button, { block: true, type: 'dashed', icon: h(PlusOutlined) }, '新增條件')), { key: 'a', req: true, block: true })
+    ]),
+
+    // ── 四個 panel 共用的動作列，置於 panel 之外、容器左下 ──
+    h('div', { style: { display: 'flex', gap: 12, marginTop: 8 } },
+      h(Button, null, '取消'), h(Button, { type: 'primary' }, '儲存'))
+  );
+}
+
+// ════════ 待補框架（互動視窗 / 提示訊息）════════
+function PendingMock(props) {
+  return h(MockShell, null,
+    h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 360, textAlign: 'center', color: CTT } },
+      h(InboxOutlined, { style: { fontSize: 48, color: '#bfbfbf', marginBottom: 16 } }),
+      h(Text, { strong: true, style: { fontSize: 15 } }, '模擬介面待補'),
+      h(Text, { type: 'secondary', style: { marginTop: 8, maxWidth: 420 } }, props.hint)
+    )
+  );
+}
+
+// ════════ 使用說明：總覽頁 ════════
+function GuideItem(props) {
+  return h('div', { style: { padding: '12px 0', borderBottom: '1px dashed ' + CSPLIT } },
+    h('div', { style: { fontSize: 13.5, lineHeight: 1.75 } }, props.rule),
+    props.why ? h('div', { style: { fontSize: 12.5, color: CTT, lineHeight: 1.65, marginTop: 4 } },
+      h(Text, { style: { color: CG_ACT, fontWeight: 600 } }, '為什麼：'), props.why) : null
+  );
+}
+
+// ════════ 使用說明：Overview（列表頁）════════
+function OverviewSpec() {
+  return h('div', { style: { padding: '24px 32px', maxWidth: 900 } },
+    h(Alert, { type: 'info', showIcon: true, style: { marginBottom: 20 },
+      message: '這個後台建立在 Ant Design v5 與 @ant-design/pro-components 之上',
+      description: '全站以 ProLayout（layout="mix"）為外框。列表頁（總覽頁）是所有功能模組「看資料」的統一版型，由 PageContainer + QueryFilter 篩選區 + ProTable 三塊組成。下面說明每個決策，以及背後的原因。' }),
+    h(SpecGroup, { title: '頁面層級與標題', icon: h(LayoutOutlinedSafe()) },
+      h(GuideItem, { rule: h('span', null, '由左側選單直接進入的內容視為', h(Text, { strong: true }, '第一層，不顯示 breadcrumb'), '；再往下鑽的頁面（第二層起）才顯示 breadcrumb。'), why: '第一層本身就是導覽起點，麵包屑只會重複左選單、反而干擾。' }),
+      h(GuideItem, { rule: h('span', null, '內容區標題文字一律 ', h(Text, { strong: true }, '20px'), '。'), why: '各模組標題級距統一，跨頁面掃視時視覺錨點一致。' })
+    ),
+    h(SpecGroup, { title: '篩選區（QueryFilter）', icon: h(FilterOutlined) },
+      h(GuideItem, { rule: h('span', null, '篩選欄位固定 ', h(Text, { code: true }, 'col-6'), '（一列 3 個輸入欄 + 最右按鈕欄），', h(Text, { strong: true }, '清除／搜尋置最右欄且靠右'), '。'), why: '固定欄寬節奏讓使用者一眼定位欄位與按鈕，跨模組體驗一致。' }),
+      h(GuideItem, { rule: h('span', null, '欄位超過一列時，多出來的收在 ', h(Text, { strong: true }, '「進階搜尋／基本搜尋」'), ' 後面，預設收起、展開才落到第二行。'), why: '篩選區不該吃掉太多垂直空間；常用欄位先露出，進階需求再展開。' }),
+      h(GuideItem, { rule: h('span', null, '篩選欄位超過 6 個，改用 ', h(Text, { strong: true }, 'form modal'), ' 承載。'), why: '過長的篩選列會擠壓下方表格，複雜條件改用彈窗更清爽。' }),
+      h(GuideItem, { rule: h('span', null, '功能夠單純時，', h(Text, { strong: true }, '不放分頁（Tabs）'), '。'), why: '不為了形式而加分頁，避免多一層無意義的點擊。' })
+    ),
+    h(SpecGroup, { title: '資料表（ProTable）', icon: h(AppstoreOutlined) },
+      h(GuideItem, { rule: h('span', null, '表格本身', h(Text, { strong: true }, '不放標題'), '（頁面已有 20px 標題）。'), why: '避免同一頁出現兩個標題造成重複。' }),
+      h(GuideItem, { rule: h('span', null, '主要動作（新增／匯出）與工具 icon（重新整理／密度／欄位設定）一律', h(Text, { strong: true }, '置右'), '；欄目超過 8 欄才顯示欄位設定工具。'), why: '動作固定在右上角，使用者能形成肌肉記憶；欄位少時不需要設定工具。' }),
+      h(GuideItem, { rule: h('span', null, '第一欄為', h(Text, { strong: true }, '項次欄'), '；當該表支援排序時，改放拖曳 handler。'), why: '項次與可排序是互斥語意——能自由排序時項次沒有意義，改讓使用者拖動。' }),
+      h(GuideItem, { rule: h('span', null, '欄寬以資料完整呈現為準、上限 200px，超長以 ', h(Text, { code: true }, '…'), ' 收尾；整表超過可視寬度則水平滾動。'), why: '先保證關鍵欄位讀得完整，再用滾動容納其餘。' }),
+      h(GuideItem, { rule: h('span', null, '「狀態」類資料用 ', h(Text, { strong: true }, 'Badge'), '（點狀）呈現，不用 Tag。'), why: '狀態是單一即時語意，小圓點的 Badge 比色塊 Tag 更輕、更適合密集表格。' }),
+      h(GuideItem, { rule: h('span', null, '要複製給客戶的連結，用 ', h(Text, { code: true }, "valueType:'Option'"), ' 呈現「連結」按鈕 + 複製 icon。'), why: '把「取得可分享連結」做成明確可點的操作，而非把一長串網址塞在欄位裡。' }),
+      h(GuideItem, { rule: h('span', null, '啟用／停用用 ', h(Text, { strong: true }, 'Switch'), '（即時生效）。'), why: '布林即時切換用 Switch 最直覺，不需另開表單。' }),
+      h(GuideItem, { rule: h('span', null, '操作連結以', h(Text, { strong: true }, '顏色分語意'), '：導覽=綠、次級（新增／匯出）=黃、破壞（刪除／作廢）=紅、不可用=灰；一律水平不折行。'), why: '顏色即語意，讓使用者不必讀文字就分辨動作輕重；不折行確保操作列整齊。' }),
+      h(GuideItem, { rule: h('span', null, '表格下方固定 ', h(Text, { strong: true }, 'pagination'), '。'), why: '大量資料一定分頁，位置固定在下方。' })
+    )
+  );
+}
+
+// ════════ 使用說明：Edit（內容頁）════════
+function EditSpec() {
+  return h('div', { style: { padding: '24px 32px', maxWidth: 900 } },
+    h(Alert, { type: 'info', showIcon: true, style: { marginBottom: 20 },
+      message: '新增／編輯內容頁的統一版型',
+      description: '由 PageContainer（三層 breadcrumb + 20px 標題）+ 一或多個 ProCard panel + ProForm 組成。後台由多位工程師開發、版型習慣不一，這裡定義統一標準與原因。' }),
+    h(SpecGroup, { title: '版型與 Panel（ProCard）', icon: h(LayoutOutlinedSafe()) },
+      h(GuideItem, { rule: h('span', null, '每個項目「', h(Text, { strong: true }, '標題 + 第一個欄位水平排列'), '」（多欄位則垂直往下排），標題欄:內容欄寬度約 ', h(Text, { strong: true }, '1:3'), '。'), why: '左標題、右內容的固定比例讓長表單好讀，也讓不同模組視覺一致。' }),
+      h(GuideItem, { rule: h('span', null, 'label ', h(Text, { strong: true }, '右對齊、標準寬 188px、無冒號、必填紅星 '), h(Text, { style: { color: CRED } }, '*'), h(Text, { strong: true }, ' 在前'), '；控件高 32、欄距 margin-bottom 24。'), why: '右對齊讓 label 與輸入框貼齊視線；紅星在前，第一眼就知道哪些必填。' }),
+      h(GuideItem, { rule: h('span', null, '關聯性強的欄位組成一個 ', h(Text, { strong: true }, 'ProCard panel'), '（自帶標題），可依語意拆成多個 panel。'), why: '把長表單依語意分段，降低一次面對太多欄位的負擔。' }),
+      h(GuideItem, { rule: h('span', null, h(Text, { strong: true }, 'panel 本身不放按鈕'), '；整頁共用一組「取消／儲存」，置於所有 panel ', h(Text, { strong: true }, '之外、容器左下角'), '，一次儲存全部 panel 內容。'), why: '內容頁常由多個 panel 組成，共用一組動作列避免每張卡重複按鈕，「儲存整頁」語意也更清楚。' })
+    ),
+    h(SpecGroup, { title: '欄位元件（欄位標題即元件名，可直接複製呼叫）', icon: h(EditOutlined) },
+      h(GuideItem, { rule: h('span', null, '文字 ', h(Text, { code: true }, 'ProFormText'), '、數字 ', h(Text, { code: true }, 'ProFormDigit'), '、下拉 ', h(Text, { code: true }, 'ProFormSelect'), '、日期 ', h(Text, { code: true }, 'ProFormDatePicker / ProFormDateRangePicker'), '、上傳 ', h(Text, { code: true }, 'ProFormUploadButton'), '(picture-card)、可增刪列表 ', h(Text, { code: true }, 'ProFormList'), '、固定分組 ', h(Text, { code: true }, 'ProForm.Group'), '、富文本 ', h(Text, { code: true }, 'ProForm.Item'), '（內層 ReactQuill）。'), why: '欄位標題直接寫對應的 pro 元件名，RD 複製即可呼叫，不必再查對照表。' }),
+      h(GuideItem, { rule: h('span', null, '多選（如選擇標籤）用 ', h(Text, { code: true }, 'ProFormSelect mode="multiple"'), '；互斥選項 5 個以內用 Radio、超過 5 個改用 Select。'), why: '多選與單選的元件與切換門檻固定，避免各模組各自發明。' }),
+      h(GuideItem, { rule: h('span', null, '單選按鈕群 ', h(Text, { code: true }, "ProFormRadio.Group optionType='button'"), ' 一律 ', h(Text, { strong: true, style: { color: CG } }, 'outline（品牌綠文字 + 品牌綠邊框 + 白底）'), '。'), why: '後台原本 outline 與實心綠底混用；統一為 outline 收斂視覺，實心綠底停用。' })
+    )
+  );
+}
+
+// 待補分頁說明（narrative，無題號）
+function PendingSpec(props) {
+  return h('div', { style: { padding: '24px 32px', maxWidth: 900 } },
+    h(Alert, { type: 'warning', showIcon: true, style: { marginBottom: 20 },
+      message: '模擬介面待補（等你提供後台頁面／連結）',
+      description: '以下先說明這一類介面預計涵蓋的元件與用途；皆為 antd 元件（pro-components 無對應）。' }),
+    h(SpecGroup, { title: '預計涵蓋的元件與用途', icon: props.icon },
+      props.families.map(function (f, i) {
+        return h(GuideItem, { key: i, rule: h('span', null, h(Text, { code: true }, f.name), '　', f.text) });
+      })
+    )
+  );
+}
+function LayoutOutlinedSafe() { return icons.LayoutOutlined || FileOutlined; }
+
+// ════════ Showcase 主體：容器 + 下方切換器 ════════
+var SHOWCASE_META = {
+  overview: { title: 'Overview', icon: h(AppstoreOutlined), desc: '模組列表頁的統一版型：PageContainer + QueryFilter 篩選 + ProTable。', mock: OverviewMock, spec: OverviewSpec },
+  edit: { title: 'Edit', icon: h(EditOutlined), desc: '新增／編輯內容頁的統一版型：PageContainer + ProCard panel + ProForm。', mock: EditMock, spec: EditSpec }
+};
+
+function Showcase(props) {
+  var section = props.section || 'overview';
+  var meta = SHOWCASE_META[section];
+  var view = props.view; var setView = props.setView;
+  return h('div', { style: { padding: 40, maxWidth: 1200 } },
+    h('div', { style: { marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid ' + CSPLIT } },
+      h(Title, { level: 3, style: { margin: 0, marginBottom: 6 } }, h(Space, null, meta.icon, meta.title)),
+      h(Text, { type: 'secondary', style: { fontSize: 13 } }, meta.desc)
+    ),
+    // 容器
+    h('div', { style: { border: '1px solid ' + CSPLIT, borderRadius: 12, overflow: 'hidden', background: '#fff' } },
+      view === 'spec' ? meta.spec() : meta.mock()
+    ),
+    // 容器下方切換器
+    h('div', { style: { display: 'flex', justifyContent: 'center', marginTop: 16 } },
+      h(Radio.Group, { value: view, buttonStyle: 'outline', optionType: 'button', onChange: function (e) { setView(e.target.value); },
+        options: [{ label: h(Space, { size: 6 }, h(AppstoreOutlined), '模擬介面'), value: 'mock' }, { label: h(Space, { size: 6 }, h(FileOutlined), '使用規範'), value: 'spec' }] })
+    )
+  );
+}
+
 function App() {
   const [messageApi, messageCtx] = message.useMessage();
   const [notifApi, notifCtx] = notification.useNotification();
@@ -1022,14 +1364,16 @@ function App() {
   const [collapseKeys, setCollapseKeys] = React.useState(['1']);
 
   const navItems = [
-    { type: 'group', label: 'Layout', children: [
-      { key: 'app-layout', icon: h(LayoutOutlined), label: 'ProLayout (mix)' },
-    ]},
     { type: 'group', label: 'Foundation', children: [
       { key: 'colors', icon: h(TagOutlined), label: 'Color Palette' },
       { key: 'tokens', icon: h(SettingOutlined), label: 'Design Tokens' },
       { key: 'typography', icon: h(FileOutlined), label: 'Typography' },
       { key: 'spacing', icon: h(AppstoreOutlined), label: 'Spacing & Radius' },
+    ]},
+    { type: 'group', label: 'Framework', children: [
+      { key: 'layout', icon: Ic('LayoutOutlined') || h(AppstoreOutlined), label: 'Layout' },
+      { key: 'container', icon: h(FileOutlined), label: 'Container' },
+      { key: 'procard', icon: h(AppstoreOutlined), label: 'Card' },
     ]},
     { type: 'group', label: 'General', children: [
       { key: 'buttons', icon: h(MenuOutlined), label: 'Button' },
@@ -1050,8 +1394,6 @@ function App() {
       { key: 'statistic', icon: h(ArrowUpOutlined), label: 'Statistic' },
       { key: 'list', icon: h(MenuOutlined), label: 'List' },
       { key: 'descriptions', icon: h(FileOutlined), label: 'Descriptions' },
-      { key: 'collapse', icon: h(RightOutlined), label: 'Collapse' },
-      { key: 'timeline', icon: h(ClockCircleOutlined), label: 'Timeline' },
       { key: 'progress', icon: h(ReloadOutlined), label: 'Progress' },
       { key: 'steps', icon: h(RightOutlined), label: 'Steps' },
       { key: 'empty-skeleton', icon: h(InboxOutlined), label: 'Empty & Skeleton' },
@@ -1063,8 +1405,7 @@ function App() {
     ]},
     { type: 'group', label: 'Feedback', children: [
       { key: 'alert', icon: h(ExclamationCircleOutlined), label: 'Alert' },
-      { key: 'message-notif', icon: h(BellOutlined), label: 'Message & Notification' },
-      { key: 'modal-drawer', icon: h(FileOutlined), label: 'Modal & Drawer' },
+      { key: 'modal-drawer', icon: h(FileOutlined), label: 'Modal' },
       { key: 'tooltip', icon: h(QuestionCircleOutlined), label: 'Tooltip' },
       { key: 'result', icon: h(CheckCircleOutlined), label: 'Result' },
       { key: 'spin', icon: h(LoadingOutlined), label: 'Spin' },
@@ -1074,13 +1415,14 @@ function App() {
   const [tableEnabled, setTableEnabled] = React.useState({ '1': true, '2': true, '3': true, '4': false });
 
   const tableColumns = [
+    { title: '#', key: 'idx', width: 56, align: 'left', render: function(_, __, i) { return i + 1; } },
     { title: '會員姓名', dataIndex: 'name', key: 'name', render: function(name) { return name; } },
     { title: '手機號碼', dataIndex: 'phone', key: 'phone' },
-    { title: '等級', dataIndex: 'level', key: 'level', render: function(level, r) { return h(Tag, { color: r.tagColor, icon: level === '金卡' ? h(CrownOutlined) : undefined }, level); } },
+    { title: '等級', dataIndex: 'level', key: 'level', render: function(level, r) { return h(Tag, { color: r.tagColor }, level); } },
     { title: '積點', dataIndex: 'points', key: 'points', render: function(v) { return h(Text, { strong: true, style: { color: v > 0 ? '#07C373' : 'rgba(0,0,0,.25)' } }, v.toLocaleString()); } },
     { title: '狀態', dataIndex: 'status', key: 'status', render: function(s) { return h(Badge, { status: s === '啟用中' ? 'success' : s === '待審核' ? 'warning' : 'error', text: s }); } },
     { title: '啟用', key: 'enabled', render: function(_, r) { return h(Switch, { size: 'small', checked: tableEnabled[r.key], onChange: function(val) { setTableEnabled(function(prev) { var next = Object.assign({}, prev); next[r.key] = val; return next; }); } }); } },
-    { title: '操作', key: 'action', render: function(_, r) { return h(Space, null, h(Button, { type: 'link', size: 'small', icon: h(EditOutlined) }, '編輯'), h(Button, { type: 'text', size: 'small', danger: true, icon: h(DeleteOutlined) }, '刪除')); } },
+    { title: '操作', key: 'action', render: function(_, r) { return h(Space, { split: h('span', { style: { color: '#d9d9d9' } }, '|'), size: 12, style: { whiteSpace: 'nowrap' } }, h('a', { style: { color: '#07C373' } }, '編輯'), h('a', { style: { color: '#FCB321' } }, '匯出'), h('a', { style: { color: '#FF4D4F' } }, '刪除'), h('a', { style: { color: '#8c8c8c', cursor: 'not-allowed' } }, '停用')); } },
   ];
 
   const tableData = [
@@ -1127,8 +1469,8 @@ function App() {
   ];
 
   const tabItems = [
-    { key: 'all', label: h(Space, null, h(TeamOutlined), '全部'), children: h(Text, { type: 'secondary' }, '顯示全部 1,284 位會員...') },
-    { key: 'gold', label: h(Space, null, h(CrownOutlined), '金卡'), children: h(Text, { type: 'secondary' }, '共 312 位...') },
+    { key: 'all', label: '全部', children: h(Text, { type: 'secondary' }, '顯示全部 1,284 位會員...') },
+    { key: 'gold', label: '金卡', children: h(Text, { type: 'secondary' }, '共 312 位...') },
     { key: 'silver', label: '銀卡', children: h(Text, { type: 'secondary' }, '共 584 位...') },
     { key: 'bronze', label: '銅卡', children: h(Text, { type: 'secondary' }, '共 388 位...') },
     { key: 'disabled', label: '停用', disabled: true, children: null },
@@ -1138,11 +1480,13 @@ function App() {
     { key: 'profile', label: '會員資料', children: h(Text, { type: 'secondary' }, '會員資料內容...') },
     { key: 'tx', label: '消費紀錄', children: h(Text, { type: 'secondary' }, '消費紀錄...') },
     { key: 'coupon', label: '優惠券', children: h(Text, { type: 'secondary' }, '優惠券列表...') },
-    { key: 'settings', label: h(Space, null, h(SettingOutlined), '設定'), children: null },
+    { key: 'settings', label: '設定', children: null },
   ];
 
   const [activeTab, setActiveTab] = React.useState('overview');
   const [devSection, setDevSection] = React.useState('roles');
+  const [showcaseSection, setShowcaseSection] = React.useState('overview');
+  const [showcaseView, setShowcaseView] = React.useState('mock');
 
   const listData = [
     { name: '王小明', desc: '上次消費：2025/05/18 · 積點 8,500', tag: '金卡', tagColor: 'success', btnType: 'primary', color: '#e6fff0', textColor: '#07C373' },
@@ -1162,7 +1506,7 @@ function App() {
             h('div', { style: { width: 32, height: 32, background: '#07C373', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16, flexShrink: 0 } }, 'E'),
             h('div', null, h(Text, { strong: true, style: { fontSize: 15, display: 'block', lineHeight: '1.2' } }, 'Echoss VIP'), h(Text, { type: 'secondary', style: { fontSize: 11 } }, 'Design System'))
           ),
-          h(Tag, { color: 'success', icon: h(AppstoreOutlined), style: { marginTop: 10, borderRadius: 99 } }, 'v1.2 · Ant Design 5')
+          h(Tag, { color: 'success', icon: h(AppstoreOutlined), style: { marginTop: 10, borderRadius: 99 } }, 'v1.3 · Ant Design 5')
         ),
         // Development 選單
         activeTab === 'development' && h(Menu, {
@@ -1186,6 +1530,19 @@ function App() {
           onClick: function(e) { var el = document.getElementById(e.key); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
           defaultSelectedKeys: ['colors'],
         }),
+        // 應用案例 選單
+        activeTab === 'showcase' && h(Menu, {
+          mode: 'inline',
+          selectedKeys: [showcaseSection],
+          style: { border: 'none', fontSize: 13 },
+          onClick: function(e) { setShowcaseSection(e.key); },
+          items: [
+            { type: 'group', label: 'Use Cases', children: [
+              { key: 'overview', icon: h(AppstoreOutlined), label: 'Overview' },
+              { key: 'edit', icon: h(EditOutlined), label: 'Edit' },
+            ]},
+          ],
+        }),
       ),
 
       h(Layout, { style: { marginLeft: 248 } },
@@ -1200,6 +1557,7 @@ function App() {
             items: [
               { key: 'development', label: h(Space, null, h(FileOutlined), 'Development') },
               { key: 'overview', label: h(Space, null, h(AppstoreOutlined), 'Component') },
+              { key: 'showcase', label: h(Space, null, Ic('LayoutOutlined') || h(AppstoreOutlined), 'Use Cases') },
             ],
           }),
           h(Space, { style: { paddingRight: 40 }, split: h(Divider, { type: 'vertical' }) },
@@ -1229,31 +1587,7 @@ function App() {
                 h(Col, { span: 8 },
                   h(Card, { title: h(Space, null, h(SettingOutlined), '前端工程師'), styles: { header: { background: '#e6f8ff', borderBottom: '1px solid #94dbff' } }, style: { height: '100%' } },
                     h(Space, { direction: 'vertical', size: 12, style: { width: '100%' } },
-                      h(Text, { type: 'secondary', style: { fontSize: 12, display: 'block' } }, '接手 Ant Design Pro 專案步驟'),
-                      h(Steps, {
-                        direction: 'vertical',
-                        size: 'small',
-                        current: -1,
-                        style: { marginTop: 4 },
-                        items: [
-                          {
-                            title: h(Text, { style: { fontSize: 12, fontWeight: 600 } }, '套用 ConfigProvider'),
-                            description: h(Text, { type: 'secondary', style: { fontSize: 11 } }, '在 src/app.tsx 的 rootContainer 加入 echossTheme，全站元件自動套用品牌色。'),
-                          },
-                          {
-                            title: h(Text, { style: { fontSize: 12, fontWeight: 600 } }, '覆蓋 ProLayout 主色'),
-                            description: h(Text, { type: 'secondary', style: { fontSize: 11 } }, '在 config/defaultSettings.ts 補上 colorPrimary: \'#07C373\'，否則側邊欄選中狀態仍為預設藍色。'),
-                          },
-                          {
-                            title: h(Text, { style: { fontSize: 12, fontWeight: 600 } }, '載入 Noto Sans TC'),
-                            description: h(Text, { type: 'secondary', style: { fontSize: 11 } }, '在 src/global.css 引入 Google Fonts，確保全站字型與規範一致。'),
-                          },
-                          {
-                            title: h(Text, { style: { fontSize: 12, fontWeight: 600 } }, '驗收對照展示頁'),
-                            description: h(Text, { type: 'secondary', style: { fontSize: 11 } }, '開啟 GitHub Pages 展示頁，逐一確認主色、Button、Tag、Switch、Form、Layout Sider 外觀是否一致。'),
-                          },
-                        ],
-                      }),
+                      h(Paragraph, { style: { fontSize: 13, margin: 0 } }, '複製 echossTheme 到專案的 src/theme/echoss-theme.ts，在 App.tsx 最外層包上 ConfigProvider 即可全局套用品牌色。'),
                       h(Divider, { style: { margin: '4px 0' } }),
                       h(Text, { type: 'secondary', style: { fontSize: 12 } }, '參照位置'),
                       h(Tag, { color: 'default' }, 'SKILL.md → ConfigProvider 設定'),
@@ -1296,7 +1630,7 @@ function App() {
                       h(Space, { wrap: true },
                         h(Tag, { color: 'default' }, 'SKILL.md'),
                         h(Tag, { color: 'default' }, 'README.md'),
-                        h(Tag, { color: 'success' }, 'v1.0'),
+                        h(Tag, { color: 'success' }, 'v1.3'),
                       ),
                       h(Button, { type: 'primary', block: true, icon: h(RightOutlined), onClick: function(e) { e.stopPropagation(); window.open('https://github.com/powc12cm/echoss-vip-design-system', '_blank'); } }, '前往 GitHub'),
                     )
@@ -1363,7 +1697,7 @@ function App() {
                   h(Space, { style: { width: '100%' }, align: 'start' },
                     h(Tag, { color: 'warning', style: { flexShrink: 0, marginTop: 2 } }, '版本紀錄'),
                     h('div', null,
-                      h(Text, { strong: true, style: { display: 'block' } }, '目前版本：v1.2 — 2026-08-14'),
+                      h(Text, { strong: true, style: { display: 'block' } }, '目前版本：v1.3 — 2026-10-02'),
                       h(Text, { type: 'secondary', style: { fontSize: 13 } }, '每次更新規範請在 SKILL.md「版本紀錄」章節新增一筆 Changelog，格式：版本號、日期、更新內容、貢獻者。'),
                     )
                   )
@@ -1374,85 +1708,6 @@ function App() {
 
           activeTab === 'overview' && h('div', { id: 'main-panel', style: { padding: 40, maxWidth: 1200 } },
 
-          h(Section, { id: 'app-layout', title: '應用框架 Layout', icon: h(LayoutOutlined), desc: '後台整體框架採 @ant-design/pro-components 的 ProLayout，layout="mix"：全寬 Header（左 logo 區 256 + 右 actions）＋下方 Sider 選單 + Content。下方為實機預覽，載入 references/layout-shell.html。' },
-            h(Card, { style: { marginBottom: 16 }, styles: { body: { padding: 0 } } },
-              h('iframe', { src: 'references/layout-shell.html', title: 'Echoss VIP mix layout', loading: 'lazy', style: { width: '100%', height: 560, border: 'none', display: 'block' } })
-            ),
-            h(Row, { gutter: 16 },
-              h(Col, { span: 14 },
-                h(Card, { title: 'ProLayout / 實測參數', size: 'small' },
-                  h(Descriptions, { column: 1, size: 'small', bordered: true, items: [
-                    { key: '1', label: '佈局 / 主題', children: h(Space, { split: h(Divider, { type: 'vertical' }) }, h(Tag, null, 'layout="mix"'), h(Tag, null, 'navTheme="light"'), h(Tag, null, 'fixSiderbar')) },
-                    { key: '2', label: 'Header 高', children: '56' },
-                    { key: '3', label: 'Sider 寬', children: '256（透明、右緣 1px #f0f0f0）' },
-                    { key: '4', label: '底色', children: 'body linear-gradient(#ffffff, #f5f5f5 28%)；header/sider/content 透明' },
-                    { key: '5', label: '選單項', children: '高 40、padding 0 16、radius 6、icon 14、gap 8' },
-                    { key: '6', label: '選中態', children: 'bg rgba(0,0,0,.04) + 文字 rgba(0,0,0,.95)（中性灰底深字）' },
-                    { key: '7', label: 'Content padding', children: '上 8 / 右 40 / 下 16 / 左 40' },
-                  ] })
-                )
-              ),
-              h(Col, { span: 10 },
-                h(Card, { title: '選單 icon 對應', size: 'small' },
-                  h(List, { size: 'small', dataSource: [
-                    { n: '功能模組', i: h(AppstoreOutlined), t: 'AppstoreOutlined' },
-                    { n: '會員分析', i: h(DashboardOutlined), t: 'DashboardOutlined' },
-                    { n: '會員資料', i: h(UserOutlined), t: 'UserOutlined' },
-                    { n: '帳號管理', i: h('span', { className: 'anticon', style: { fontSize: 14, lineHeight: 0 } }, h('svg', { viewBox: '0 0 1024 1024', width: '1em', height: '1em', fill: 'currentColor', 'aria-hidden': true }, h('path', { d: 'M512 18.271l400.677 89.04c22.305 4.958 38.18 24.74 38.18 47.59v444.334c0 97.819-48.9 189.163-130.292 243.42L512 1019.27 203.435 842.654c-81.378-54.247-130.269-145.569-130.292-243.37V154.902c0-22.85 15.875-42.633 38.18-47.592L512 18.271zM170.667 194.01v405.226c0 65.21 32.59 126.105 86.845 162.28L512 902.095l254.488-140.58c54.241-36.166 86.828-97.039 86.845-162.231V194.009L512 118.233l-341.333 75.776zM512 268.19c44.147-0.02 82.802 29.62 94.239 72.26 11.437 42.64-7.197 87.644-45.428 109.72l-0.05 208.116h-97.523V450.17c-38.224-22.071-56.858-67.063-45.434-109.697S467.862 268.19 512 268.19z' }))), t: 'iconfont #icon-icon-assignpermissions' },
-                    { n: '門市管理', i: h(PartitionOutlined), t: 'PartitionOutlined' },
-                    { n: '系統設定', i: h(LayoutOutlined), t: 'LayoutOutlined' },
-                    { n: '下載區', i: h(CloudDownloadOutlined), t: 'CloudDownloadOutlined' },
-                    { n: '使用手冊', i: h(FileOutlined), t: 'FileOutlined' },
-                  ], renderItem: function(it) { return h(List.Item, null, h(List.Item.Meta, { avatar: it.i, title: it.n, description: h(Text, { type: 'secondary', style: { fontSize: 12 } }, it.t) })); } })
-                )
-              )
-            )
-          ),
-
-
-
-          h(Section, { id: 'page-layouts', title: '列表頁 / 內容頁 Layout', icon: h(LayoutOutlined), desc: '頁面以 PageContainer 包裹：breadcrumb（三層）→ 標題 → tabs（列表頁）→ 內容。下方為實機預覽，載入 references/content-layouts.html（預設列表頁 L2；點表格上方「新增資料」進內容頁 L3，點 breadcrumb「範例模組」回列表頁）。' },
-            h(Card, { style: { marginBottom: 16 }, styles: { body: { padding: 0 } } },
-              h('iframe', { src: 'references/content-layouts.html', title: 'Echoss VIP 列表頁 / 內容頁', loading: 'lazy', style: { width: '100%', height: 640, border: 'none', display: 'block' } })
-            ),
-            h(Row, { gutter: 16 },
-              h(Col, { span: 12 },
-                h(Card, { title: '列表頁（PageContainer + ProTable）', size: 'small' },
-                  h(Descriptions, { column: 1, size: 'small', bordered: true, items: [
-                    { key: '1', label: 'Breadcrumb', children: '三層：功能模組 /（模組）/（動作）；祖節點 rgba(0,0,0,.45)、當前 rgba(0,0,0,.88)' },
-                    { key: '2', label: '項次欄', children: '最左側 valueType="index"、# 、寬 36、靠左、表頭 #fafafa' },
-                    { key: '3', label: '版面', children: '篩選 card + 表格 card；表格 card body padding 0 24 16' },
-                    { key: '4', label: '工具列', children: '新增鈕（primary）靠右、緊貼 重新整理/密度/欄位設定 icon' },
-                  ] })
-                )
-              ),
-              h(Col, { span: 12 },
-                h(Card, { title: '內容頁（PageContainer + ProForm）', size: 'small' },
-                  h(Descriptions, { column: 1, size: 'small', bordered: true, items: [
-                    { key: '1', label: 'Panel', children: '獨立 ProCard（bordered + 標題），panel-body padding 16 24' },
-                    { key: '2', label: '表單', children: 'form-item 格式：label 左 188、右對齊、必填紅星在前；控件高 32' },
-                    { key: '3', label: '動作列', children: '每個 panel 各自「取消/儲存」於左下角（非整頁單一）' },
-                    { key: '4', label: '欄位命名', children: '標題＝pro 元件名（見下方對照）' },
-                  ] })
-                )
-              )
-            ),
-            h(Card, { title: '欄位元件命名對照（欄位標題即元件名，可複製呼叫）', size: 'small', style: { marginTop: 16 } },
-              h(List, { size: 'small', grid: { gutter: 8, column: 2 }, dataSource: [
-                { t: 'ProFormText', d: '文字輸入' },
-                { t: 'ProFormDigit', d: '數字輸入' },
-                { t: 'ProFormSelect', d: '下拉選單' },
-                { t: 'ProFormRadio.Group', d: '單選（button / 原生）' },
-                { t: 'ProFormDatePicker', d: '日期' },
-                { t: 'ProFormDateRangePicker', d: '日期區間' },
-                { t: 'ProFormUploadButton', d: '上傳' },
-                { t: 'ProForm.Item', d: '富文本（ReactQuill / Quill snow）' },
-                { t: 'ProFormList', d: '可增刪列表（如儲值面額）' },
-                { t: 'ProForm.Group', d: '固定分組（如發點規則）' },
-                { t: 'ProList', d: '資料列表含操作（如各等級加碼設定）' },
-              ], renderItem: function(it) { return h(List.Item, null, h(Space, null, h(Tag, { color: 'default' }, it.t), h(Text, { type: 'secondary', style: { fontSize: 12 } }, it.d))); } })
-            )
-          ),
 
           h(Section, { id: 'colors', title: 'Color Palette', icon: h(TagOutlined), desc: '品牌色以 #07C373 為基底，透過 @ant-design/colors generate() 推算完整 10 階色盤。懸停查看色碼。' },
             h(Space, { direction: 'vertical', size: 20, style: { width: '100%' } },
@@ -1482,8 +1737,7 @@ function App() {
                   { key: 'colorWarning', token: 'colorWarning', value: '#FCB321', usage: '警示狀態' },
                   { key: 'colorError', token: 'colorError', value: '#FF4D4F', usage: '錯誤、Danger Button' },
                   { key: 'colorInfo', token: 'colorInfo', value: '#1A9CFF', usage: '資訊提示' },
-                  { key: 'colorBgLayout', token: 'colorBgLayout', value: '#F5F5F5', usage: '頁面底色基準（實際 body 漸層 #fff→#f5f5f5；header/sider/content 透明）' },
-                  { key: 'colorSplit', token: 'colorSplit', value: '#f0f0f0', usage: '分隔線：sider 右緣、header 下緣、tabs、卡片' },
+                  { key: 'colorBgLayout', token: 'colorBgLayout', value: '#F8F9FA', usage: '頁面整體背景' },
                   { key: 'colorBorder', token: 'colorBorder', value: '#D9D9D9', usage: '通用邊框色' },
                   { key: 'fontFamily', token: 'fontFamily', value: 'Noto Sans TC, sans-serif', usage: '全域字型' },
                   { key: 'fontSize', token: 'fontSize', value: '14px', usage: '基礎字型大小' },
@@ -1559,7 +1813,115 @@ function App() {
             )
           ),
 
-          h(Section, { id: 'buttons', title: 'Button', icon: h(MenuOutlined), desc: 'antd <Button> 所有 type / size / shape / state 組合。' },
+          // ════════ Framework › Layout ════════
+          h(Section, { id: 'layout', title: 'Layout', icon: Ic('LayoutOutlined') || h(AppstoreOutlined), desc: '全站外框 ProLayout（layout="mix"）：每一頁共用的 Header + Sider + Content 骨架。巢狀關係：ProLayout（站）⊃ PageContainer（頁）⊃ ProCard（區塊）。' },
+            h(ProNote, { name: 'ProLayout（layout="mix"）', imp: "import ProLayout from '@ant-design/pro-components';\n// <ProLayout layout=\"mix\" navTheme=\"light\" fixSiderbar siderWidth={256}\n//   title=\"Echoss VIP\" logo={logo} />", notes: [
+              ['定位', '全站最外層框架，每頁共用；提供全寬 Header、左側 Sider 選單、右側 Content 內容區'],
+              ['關鍵 props', 'layout="mix"、navTheme="light"、fixSiderbar、siderWidth=256、title="Echoss VIP"、logo'],
+              ['底色', 'header / sider / content 三者皆透明；實際底色來自 body 漸層 linear-gradient(#ffffff, #f5f5f5 28%)（fixed，不隨捲動）'],
+              ['分隔線', '#f0f0f0：header 下緣為全寬線；sider 右緣線只在 y≥56（header 下方）出現 — 這是 mix 與 side 的差別']
+            ] }),
+            // 結構示意
+            h('div', { style: { border: '1px solid ' + CSPLIT, borderRadius: 8, overflow: 'hidden', marginBottom: 16, background: 'linear-gradient(#ffffff,#f5f5f5 60%)' } },
+              h('div', { style: { height: 40, borderBottom: '1px solid ' + CSPLIT, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, fontSize: 12, color: CTT } },
+                h('span', { style: { width: 18, height: 18, borderRadius: 4, background: CG, display: 'inline-block' } }),
+                h(Text, { strong: true, style: { fontSize: 12 } }, 'Header'), h(Text, { type: 'secondary', style: { fontSize: 12 } }, '全寬 · 高 56 · 透明 · 下緣 1px 全寬線'),
+                h('span', { style: { marginLeft: 'auto', fontSize: 11, color: CTT } }, '語系切換 · 使用者 · stage')
+              ),
+              h('div', { style: { display: 'flex', minHeight: 150 } },
+                h('div', { style: { width: 150, borderRight: '1px solid ' + CSPLIT, padding: 12, fontSize: 12, color: CTT } },
+                  h(Text, { strong: true, style: { fontSize: 12, display: 'block', marginBottom: 8 } }, 'Sider · 256'),
+                  ['功能模組', '會員分析', '會員資料', '帳號管理'].map(function (t, i) { return h('div', { key: i, style: { height: 28, lineHeight: '28px', borderRadius: 6, padding: '0 10px', marginBottom: 4, background: i === 0 ? 'rgba(0,0,0,.04)' : 'transparent', color: i === 0 ? 'rgba(0,0,0,.95)' : 'rgba(0,0,0,.65)', fontWeight: i === 0 ? 600 : 400 } }, t); })
+                ),
+                h('div', { style: { flex: 1, padding: '8px 40px 16px', fontSize: 12, color: CTT } },
+                  h(Text, { strong: true, style: { fontSize: 12, display: 'block' } }, 'Content'),
+                  h(Text, { type: 'secondary', style: { fontSize: 12 } }, 'padding 上8 / 右40 / 下16 / 左40 → 內放 PageContainer')
+                )
+              )
+            ),
+            h(SpecGroup, { title: 'Layout 參數（工程基準值）', icon: h(SettingOutlined) },
+              h(Table, { size: 'small', pagination: false, showHeader: true,
+                columns: [{ title: '項目', dataIndex: 'k', width: 170 }, { title: '值', dataIndex: 'v', render: function (v) { return h(Text, { style: { fontSize: 12.5 } }, v); } }],
+                dataSource: [
+                  { k: 'Header 高度', v: '56' },
+                  { k: 'Header logo 區寬', v: '256（padding 0 16；logo 28×28；title 17px / 700）' },
+                  { k: 'Header actions', v: 'padding 0 16；item gap 20' },
+                  { k: '語系切換 Select', v: '高 36、border 1px #D9D9D9、radius 6、min-width 150' },
+                  { k: '使用者頭像 avatar', v: '22×22、圓形' },
+                  { k: '名稱 / 副標', v: '14 / 600　·　12 #8c8c8c' },
+                  { k: '環境 badge（stage）', v: '背景 colorPrimary、字 #fff、12 / 500、padding 5 7、radius 4' },
+                  { k: 'Sider 寬', v: '256（透明、右緣 1px #f0f0f0）' },
+                  { k: '收合鈕', v: '26×26、top 20 / right -13、圓形' },
+                  { k: '選單容器 padding', v: '0 8（僅左右 8）' },
+                  { k: '選單項 item', v: '高 40、padding 0 16、radius 6、icon↔文字 gap 8' },
+                  { k: '選單 icon', v: '14px' },
+                  { k: '選單項文字色', v: 'rgba(0,0,0,.65)' },
+                  { k: '選單選中態', v: '背景 rgba(0,0,0,.04)、文字 rgba(0,0,0,.95)、font-weight 600（中性灰底深字，非品牌綠底）' },
+                  { k: 'Content padding', v: '上 8 / 右 40 / 下 16 / 左 40' }
+                ].map(function (r, i) { return Object.assign({ key: i }, r); })
+              })
+            )
+          ),
+
+          // ════════ Framework › Container ════════
+          h(Section, { id: 'container', title: 'Container', icon: h(FileOutlined), desc: '單頁容器 PageContainer：頁面的「殼」與頁首（breadcrumb → 標題 → tabs → 內容），並定義列表頁與內容頁的整體組成。' },
+            h(ProNote, { name: 'PageContainer', imp: "import { PageContainer, FooterToolbar } from '@ant-design/pro-components';", notes: [
+              ['定位', '單頁的殼與頁首，放在 ProLayout 的 Content 內、包住整頁內容'],
+              ['組成順序', 'breadcrumb →　標題（20 / 600）→（列表頁才有）Tabs → 內容區'],
+              ['header padding', '8px 40px 16px（與 Content 內距一致）；標題 20px / 600'],
+              ['頁尾動作列', '需要整頁固定動作列時用 FooterToolbar；內容頁的區塊動作列則放在各 ProCard panel 左下角（見 Framework › Card）']
+            ] }),
+            h(SpecGroup, { title: 'Breadcrumb（三層規則）', icon: h(RightOutlined) },
+              h(Table, { size: 'small', pagination: false,
+                columns: [{ title: '層級', dataIndex: 'lv', width: 130 }, { title: '範例', dataIndex: 'ex', width: 230 }, { title: '說明', dataIndex: 'note' }],
+                dataSource: [
+                  { lv: 'L1（root）', ex: '功能模組', note: '功能群組，導覽節點' },
+                  { lv: 'L2（列表頁）', ex: '功能模組 / 優惠模組', note: '進入模組後' },
+                  { lv: 'L3（新增/編輯）', ex: '功能模組 / 優惠模組 / 新增票券', note: '再下一層內容頁' }
+                ].map(function (r, i) { return Object.assign({ key: i }, r); })
+              }),
+              h(GuideItem, { rule: h('span', null, '字級 14；祖節點色 ', h(Text, { code: true }, 'rgba(0,0,0,.45)'), '、當前（末）節點 ', h(Text, { code: true }, 'rgba(0,0,0,.88)'), '；分隔線 ', h(Text, { code: true }, '/'), ' 為 rgba(0,0,0,.45)、margin 0 8。'), why: '由左側選單直接進入的第一層不顯示 breadcrumb，第二層起才顯示——第一層本身即導覽起點，麵包屑只會重複左選單。' })
+            ),
+            h(SpecGroup, { title: '頁型組成', icon: h(AppstoreOutlined) },
+              h(GuideItem, { rule: h('span', null, h(Text, { strong: true }, '列表頁（總覽）：'), 'PageContainer →（可選）Tabs → 篩選 ProCard + 表格 ProCard（各自獨立兩張卡）。'), why: '篩選與表格分成兩張卡，分區清楚；詳細欄位規則見 Use Cases › Overview。' }),
+              h(GuideItem, { rule: h('span', null, h(Text, { strong: true }, '內容頁（Edit）：'), 'PageContainer（三層 breadcrumb + 標題，無 Tabs）→ 垂直堆疊一或多個 ProCard panel → 頁尾。'), why: '依語意把長表單拆成多個 panel；單一 panel 內的版型見 Framework › Card。' })
+            )
+          ),
+
+          // ════════ Framework › Card（ProCard）════════
+          h(Section, { id: 'procard', title: 'Card', icon: h(AppstoreOutlined), desc: 'ProCard（高级卡片）：頁面內把內容切塊的白底容器 / panel，也是 Edit 版型的 panel 單位。與 Data Display › Card（antd Card，用於資料展示）不同。' },
+            h(ProNote, { name: 'ProCard（高级卡片）', imp: "import { ProCard } from '@ant-design/pro-components';\n// <ProCard title=\"區塊名\" bordered> … </ProCard>", notes: [
+              ['定位', '卡片 ＋ 版面容器；後台所有白底區塊（篩選卡、表格卡、編輯 panel、會員詳情卡）都是 ProCard'],
+              ['容器能力', 'split="vertical|horizontal" 分割子卡、gutter 柵格、巢狀 ProCard、內嵌 tabs、collapsible 折疊、ghost、bordered、size'],
+              ['panel 外觀', 'bordered + title 為區塊名（16 / 600）；panel-body padding 16 24'],
+              ['vs antd Card', 'antd Card 僅做資料展示（title / extra / cover / actions / Meta / Grid）；ProCard 多了分割、柵格、巢狀等版面能力，故在此當版面區塊容器用。純資料展示卡見 Data Display › Card']
+            ] }),
+            h(SpecGroup, { title: 'Edit 類型 panel 版型', icon: h(EditOutlined) },
+              h(GuideItem, { rule: h('span', null, '每個 panel 一張 ', h(Text, { code: true }, 'ProCard'), '（bordered + 標題）；關聯性強的欄位組成一張、可拆多張 panel。'), why: '把長表單依語意分段，降低一次面對太多欄位的負擔。' }),
+              h(GuideItem, { rule: h('span', null, '每個項目「', h(Text, { strong: true }, '標題 + 第一個欄位水平排列'), '」（多欄位則垂直往下排），標題欄:內容欄寬度約 ', h(Text, { strong: true }, '1:3'), '。'), why: '左標題、右內容的固定比例讓長表單好讀，也讓不同模組視覺一致。' }),
+              h(GuideItem, { rule: h('span', null, 'form-item label ', h(Text, { strong: true }, '右對齊、標準寬 188px、無冒號、必填紅星 '), h(Text, { style: { color: CRED } }, '*'), h(Text, { strong: true }, ' 在前'), '；控件高 32、欄距 margin-bottom 24；輔助說明 rgba(0,0,0,.45) 14。'), why: '右對齊讓 label 與輸入框貼齊視線；紅星在前，第一眼就知道哪些必填。' }),
+              h(GuideItem, { rule: h('span', null, h(Text, { strong: true }, 'panel 本身不放按鈕'), '；整頁的「取消(default) / 儲存(primary)」共用一組，置於所有 panel ', h(Text, { strong: true }, '之外、容器的左下角'), '（參考 survey/create），用以一次儲存所有 panel 內容。'), why: '內容頁常由多個 panel 組成，共用一組動作列避免每張卡都重複按鈕、也讓「儲存整頁」的語意清楚。' }),
+              h('div', { style: { fontSize: 12.5, color: CTT, paddingTop: 8 } }, '欄位元件（ProFormText / ProFormDigit / ProFormSelect / ProFormRadio.Group …）見 Data Entry › Form。')
+            ),
+            // 視覺示範：兩個 panel（各自無按鈕）+ 共用動作列置於 panel 之外左下
+            (function () {
+              var pnl = function (title, label, ctrl) {
+                return h(Card, { title: h(Text, { strong: true, style: { fontSize: 16 } }, title), style: { marginBottom: 16 }, styles: { body: { padding: '16px 24px' } } },
+                  h('div', { style: { display: 'flex', alignItems: 'flex-start' } },
+                    h('div', { style: { width: 188, flexShrink: 0, textAlign: 'right', paddingRight: 12, fontSize: 14, minHeight: 32, lineHeight: '32px' } }, label),
+                    h('div', { style: { flex: 1, maxWidth: 360, minHeight: 32, display: 'flex', alignItems: 'center' } }, ctrl)
+                  )
+                );
+              };
+              return h('div', null,
+                pnl('基本資料', '等級名稱', h(Input, { defaultValue: 'LV1 Basic Member' })),
+                pnl('集點設定', '會員卡集點功能', h(Switch, { defaultChecked: true })),
+                h('div', { style: { display: 'flex', gap: 12, marginTop: 8 } }, h(Button, null, '取消'), h(Button, { type: 'primary' }, '儲存'))
+              );
+            })()
+          ),
+
+          h(Section, { id: 'buttons', title: 'Button', icon: h(MenuOutlined), desc: 'antd <Button> 所有 type / size / shape / state 組合。（無 pro 對應，直接使用 antd）' },
             h(Demo, { label: 'type — primary · default · dashed · text · link' },
               h(Button, { type: 'primary' }, 'Primary'),
               h(Button, null, 'Default'),
@@ -1589,7 +1951,7 @@ function App() {
               h(Button, { type: 'primary', disabled: true }, 'Disabled'),
             ),
             h(Demo, { label: 'Button.Group' },
-              h(Button.Group, null, h(Button, null, '銅卡'), h(Button, { type: 'primary' }, '銀卡'), h(Button, null, '金卡')),
+              h(Button.Group, null, h(Button, null, '銅卡'), h(Button, { style: { color: '#07C373', borderColor: '#07C373' } }, '銀卡'), h(Button, null, '金卡')),
               h(Button.Group, null, h(Button, { icon: h(LeftOutlined) }), h(Button, { icon: h(RightOutlined) })),
             ),
             h(Demo, { label: 'block={true}', col: true },
@@ -1601,7 +1963,7 @@ function App() {
           ),
 
 
-          h(Section, { id: 'typography-comp', title: 'Typography Component', icon: h(FileOutlined), desc: '<Typography.Text type="secondary|success|warning|danger" />' },
+          h(Section, { id: 'typography-comp', title: 'Typography Component', icon: h(FileOutlined), desc: '<Typography.Text type="secondary|success|warning|danger" />（無 pro 對應，直接使用 antd）' },
             h(Demo, { label: 'Text type variants', col: true },
               h(Text, null, '預設文字（無 type）'),
               h(Text, { type: 'secondary' }, '次要文字 secondary'),
@@ -1612,7 +1974,12 @@ function App() {
             ),
           ),
 
-          h(Section, { id: 'input', title: 'Input', icon: h(EditOutlined), desc: '<Input> prefix suffix addonBefore addonAfter status size disabled — <Input.Password> <Input.TextArea>' },
+          h(Section, { id: 'input', title: 'Input', icon: h(EditOutlined), desc: 'ProFormText（文字）/ ProFormDigit（數字）— 底層 antd Input／InputNumber；prefix suffix addonBefore addonAfter、Input.Password、Input.TextArea' },
+            h(ProNote, { name: 'ProFormText / ProFormDigit', imp: "import { ProFormText, ProFormDigit } from '@ant-design/pro-components';", notes: [
+              ['內容頁對應', 'ProFormText＝文字輸入、ProFormDigit＝數字輸入（升等條件的金額/次數即 ProFormDigit，controls 關閉）'],
+              ['排版', 'form-item label 右對齊、標準欄寬 188px、控件高 32、margin-bottom 24'],
+              ['備註', 'ProFormText 可帶 allowClear（等級名稱欄可清除）']
+            ] }),
             h(Demo, { label: 'status · disabled', col: true },
               h('div', { style: { width: 400 } },
                 h(Space, { direction: 'vertical', style: { width: '100%' }, size: 10 },
@@ -1655,7 +2022,11 @@ function App() {
             ),
           ),
 
-          h(Section, { id: 'select', title: 'Select', icon: h(DownOutlined), desc: '<Select options size disabled />' },
+          h(Section, { id: 'select', title: 'Select', icon: h(DownOutlined), desc: 'ProFormSelect — 底層 antd Select；options size disabled、mode="multiple"（selector-multiple）' },
+            h(ProNote, { name: 'ProFormSelect（含 mode="multiple"）', imp: "import { ProFormSelect } from '@ant-design/pro-components';", notes: [
+              ['單選', 'ProFormSelect（如會籍效期）；class ant-pro-filed-search-select、預設 show-search'],
+              ['多選 = selector-multiple', 'mode="multiple"（受眾>標籤，K4）；class ant-select-multiple；勾選來源後動態顯示']
+            ], warn: ['選項 5 個以內用 Radio、超過 5 個用 Select（設計系統 Radio 規範）'] }),
             h(Demo, { label: 'Basic · sizes · disabled' },
               h(Select, { defaultValue: 'silver', style: { width: 160 }, options: [{ value: 'bronze', label: '銅卡會員' }, { value: 'silver', label: '銀卡會員' }, { value: 'gold', label: '金卡會員' }, { value: 'diamond', label: '鑽石會員' }] }),
               h(Select, { defaultValue: 'all', size: 'large', style: { width: 160 }, options: [{ value: 'all', label: '全部狀態' }, { value: 'active', label: '已啟用' }, { value: 'inactive', label: '已停用' }] }),
@@ -1664,7 +2035,29 @@ function App() {
             ),
           ),
 
-          h(Section, { id: 'radio-checkbox', title: 'Radio & Checkbox', icon: h(CheckOutlined), desc: 'Radio 用於 2–5 個互斥選項；Checkbox 用於多選。' },
+          h(Section, { id: 'radio-checkbox', title: 'Radio & Checkbox', icon: h(CheckOutlined), desc: 'ProFormRadio.Group（2–5 互斥選項，超過 5 改 ProFormSelect）/ ProFormCheckbox（多選）— 底層 antd Radio／Checkbox' },
+            h(ProNote, { name: 'ProFormRadio.Group', imp: "import { ProFormRadio } from '@ant-design/pro-components';\n// <ProFormRadio.Group options fieldProps={{ optionType:'button' }} />", notes: [
+              ['標準樣式', "optionType='button' 選中態一律 outline：品牌綠文字 + 品牌綠邊框 + 白底（buttonStyle 預設 outline）"],
+              ['原生圈', '是/否等亦可用原生 Radio.Group（如升等禮設定）'],
+              ['多選', 'Checkbox.Group（如受眾篩選資料來源），部分選項可 disabled']
+            ], warn: ['標準為 outline（綠字綠框）；後台既有的實心綠底白字（buttonStyle:"solid"）為待汰換的舊樣式，新開發一律使用 outline'] }),
+            h('div', { style: { fontSize: 13, color: CTT, margin: '0 0 12px' } }, '以下為編輯頁中 Radio.Group / Radio.Button / Switch 的選用規範。三者都是「單選、互斥」；差別在視覺權重與情境。'),
+            h(SpecGroup, { title: 'Radio.Button — 使用時機', icon: h(CheckCircleOutlined) },
+              h(GuideItem, { rule: h('span', null, h(Text, { strong: true }, '層級次高的設定項目'), '（選定後其餘表單內容會隨之改變），例如票券類型「商品券 / 餘額券 / 優惠券」。'), why: '這種一經設定儲存即無法再變更的類型，用分段按鈕凸顯它是決定全表單走向的關鍵切換。' }),
+              h(GuideItem, { rule: h('span', null, '2–5 互斥選項的類型切換，', h(Text, { strong: true }, '且選擇後會展開額外欄位'), '時，例如「僅一次 / 不限次數 / 指定次數」「不指定 / 指定門市 / 指定門市群組」——指定次數帶 input、指定門市 / 群組帶 select。'), why: '此類可於儲存後再次變更；用在 form 內時，第一列 Radio.Button 與展開內容的間距與一般欄位一致為 24px。' }),
+              h(GuideItem, { rule: h('span', null, '「因應某結果而可設定 ', h(Text, { strong: true }, '是／否 觸發下一動作'), '」的類型，例如「當會員卡升等時，是 / 否 發送升等禮」「當票券到期時，是否發送 LINE 通知」。'), why: '格式為「標題＝當＊＊＊時、內容＝是 / 否 發送＊＊＊」；此類可於儲存後再次變更。' })
+            ),
+            h(SpecGroup, { title: 'Radio.Button — 不使用時機', icon: h(StopOutlined) },
+              h(GuideItem, { rule: h('span', null, '選項超過 5 項 → 改用 ', h(Text, { strong: true }, 'Select'), '。') }),
+              h(GuideItem, { rule: h('span', null, '層級較高的功能啟用與否（如會員卡模組的集點功能）→ 用 ', h(Text, { strong: true }, 'Switch'), '。') })
+            ),
+            h(SpecGroup, { title: 'Radio.Group（原生圈）— 使用時機', icon: h(CheckOutlined) },
+              h(GuideItem, { rule: h('span', null, '2–5 互斥選項的類型切換、', h(Text, { strong: true }, '且選擇後不會展開額外欄位'), '，例如「發放生日禮：生日當月 1 號 / 生日當天」等簡單、不顯眼的設定項目。') }),
+              h(GuideItem, { rule: h('span', null, '選項僅 ', h(Text, { strong: true }, '是 / 否'), '、且標題已詳述此設定功能、內容無需補充說明，例如「轉贈給好友：是 / 否」。') })
+            ),
+            h(SpecGroup, { title: 'Switch — 使用時機', icon: h(ReloadOutlined) },
+              h(GuideItem, { rule: h('span', null, h(Text, { strong: true }, '層級較高的功能啟用與否'), '，例如會員卡模組的集點功能啟用與否。') })
+            ),
             h(Demo, { label: 'Radio.Group · Radio.Button', col: true },
               h(Radio.Group, { value: radioVal, onChange: function(e) { setRadioVal(e.target.value); } },
                 h(Radio, { value: 'bronze' }, '銅卡'),
@@ -1672,7 +2065,7 @@ function App() {
                 h(Radio, { value: 'gold' }, '金卡'),
                 h(Radio, { value: 'diamond', disabled: true }, '鑽石（停用）'),
               ),
-              h(Radio.Group, { defaultValue: 'quarter', buttonStyle: 'solid' },
+              h(Radio.Group, { defaultValue: 'quarter', buttonStyle: 'outline' },
                 h(Radio.Button, { value: 'month' }, '月報表'),
                 h(Radio.Button, { value: 'quarter' }, '季報表'),
                 h(Radio.Button, { value: 'year' }, '年報表'),
@@ -1685,7 +2078,12 @@ function App() {
             ),
           ),
 
-          h(Section, { id: 'switch', title: 'Switch', icon: h(ReloadOutlined), desc: '<Switch defaultChecked size="small" disabled /> — 僅用於即時生效的布林值切換。' },
+          h(Section, { id: 'switch', title: 'Switch', icon: h(ReloadOutlined), desc: 'ProFormSwitch — 底層 antd Switch；僅用於即時生效的布林值切換' },
+            h(ProNote, { name: 'ProFormSwitch / 列表啟用欄 Switch', imp: "import { ProFormSwitch } from '@ant-design/pro-components';", notes: [
+              ['層級較高功能啟用', '模組 / 功能層級的啟用與否（如會員卡集點功能）用 Switch，不用 Radio'],
+              ['列表啟用欄', '規範使用 <Switch size="small" />，即時反映啟用狀態'],
+              ['表格二擇一', '表格內「停用/啟用」操作用 ProFormSwitch']
+            ] }),
             h(Demo, { label: 'States · Sizes', col: true },
               h(Space, { align: 'center' }, h(Switch, { checked: switchVal, onChange: setSwitchVal }), h(Text, null, '推播通知（', switchVal ? '開啟' : '關閉', '）')),
               h(Space, { align: 'center' }, h(Switch, { checked: switchVal2, onChange: setSwitchVal2 }), h(Text, null, '行銷訊息（', switchVal2 ? '開啟' : '關閉', '）')),
@@ -1695,7 +2093,14 @@ function App() {
             ),
           ),
 
-          h(Section, { id: 'form', title: 'Form', icon: h(FileOutlined), desc: '<Form layout="horizontal"> <Form.Item label required validateStatus help extra labelCol wrapperCol />' },
+          h(Section, { id: 'form', title: 'Form', icon: h(FileOutlined), desc: 'ProForm layout="horizontal" / QueryFilter（列表篩選）— 底層 antd Form；Form.Item label required validateStatus help extra' },
+            h(ProNote, { name: 'ProForm / QueryFilter / ProForm.Group / ProFormList', imp: "import { ProForm, QueryFilter, ProFormList } from '@ant-design/pro-components';", notes: [
+              ['ProForm', 'layout="horizontal"；label 右對齊、標準欄寬 188px、必填紅星在前、margin-bottom 24'],
+              ['QueryFilter（列表篩選）', '欄位 col-6（4 欄/列：3 輸入欄 + 按鈕欄）；padding 24、rowGap 24；清除/搜尋置最右欄且置右'],
+              ['ProForm.Group', '各等級固定、單一條件的組合（升等條件：條件一/二 ProFormDigit）'],
+              ['ProFormList', '可增刪列表（儲值面額、觸發條件），底部「新增」dashed 鈕'],
+              ['富文本', '採 ReactQuill（Quill snow 主題）；pro 無官方富文本元件']
+            ] }),
             h(Demo, { label: 'Horizontal Layout (default)', col: true },
               h(Form, { layout: 'horizontal', labelCol: { span: 6 }, wrapperCol: { span: 18 }, style: { width: 560 } },
                 h(Form.Item, { label: '會員姓名', required: true }, h(Input, { defaultValue: '王小明' })),
@@ -1707,54 +2112,80 @@ function App() {
             ),
           ),
 
-          h(Section, { id: 'upload', title: 'Upload', icon: h(UploadOutlined), desc: '<Upload.Dragger> · <Upload>' },
-            h(Demo, { label: 'Upload.Dragger' },
-              h('div', { style: { width: '100%' } },
-                h(Upload.Dragger, { name: 'file', multiple: true, showUploadList: false },
-                  h('p', { className: 'ant-upload-drag-icon' }, h(InboxOutlined, { style: { fontSize: 40, color: '#07C373' } })),
-                  h('p', { className: 'ant-upload-text', style: { fontWeight: 500 } }, '點擊或拖曳檔案至此處上傳'),
-                  h('p', { className: 'ant-upload-hint' }, '支援 JPG、PNG、PDF，單檔限 5MB'),
+          h(Section, { id: 'upload', title: 'Upload', icon: h(UploadOutlined), desc: 'ProFormUploadButton — 底層 antd Upload；listType="picture-card"。會員卡「卡面圖片」欄位：104×104 縮圖、欄位帶 tooltip 說明。' },
+            h(ProNote, { name: 'ProFormUploadButton', imp: "import { ProFormUploadButton } from '@ant-design/pro-components';\n// <ProFormUploadButton listType=\"picture-card\" max={1} />", notes: [
+              ['規範', '會員卡「卡面圖片」listType="picture-card"，縮圖 104×104；欄位標題旁帶 tooltip 說明（建議尺寸等）'],
+              ['狀態', '未上傳：dashed 虛線框 + 「+ 上傳」；已上傳：顯示縮圖，hover 出現預覽 / 刪除']
+            ] }),
+            h(Demo, { label: 'picture-card — 未上傳 / 已上傳' },
+              h('div', { style: { display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap' } },
+                h('div', null,
+                  h('div', { style: { fontSize: 12, color: 'rgba(0,0,0,.45)', marginBottom: 8 } }, '未上傳'),
+                  h('div', { style: { width: 104, height: 104, borderRadius: 8, border: '1px dashed ' + CBORDER, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(0,0,0,.45)', cursor: 'pointer', background: '#fafafa' } },
+                    h(PlusOutlined, { style: { fontSize: 18 } }), h('div', { style: { fontSize: 12, marginTop: 6 } }, '上傳'))
+                ),
+                h('div', null,
+                  h('div', { style: { fontSize: 12, color: 'rgba(0,0,0,.45)', marginBottom: 8 } }, '已上傳（hover 顯示預覽 / 刪除）'),
+                  h('div', { style: { width: 104, height: 104, borderRadius: 8, border: '1px solid ' + CBORDER, overflow: 'hidden', position: 'relative', background: 'linear-gradient(135deg,#d9c3a5,#8a6d4b)' } },
+                    h('div', { style: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' } },
+                      h('div', { style: { width: 44, height: 44, borderRadius: '50%', background: 'radial-gradient(circle at 50% 35%,#fff,#e8d9c4)', marginBottom: 16 } })),
+                    h('div', { style: { position: 'absolute', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, color: '#fff' } },
+                      h(EyeOutlined, { style: { fontSize: 16, cursor: 'pointer' } }), h(DeleteOutlined, { style: { fontSize: 16, cursor: 'pointer' } }))
+                  )
                 )
               )
             ),
-            h(Demo, { label: 'Button trigger' },
-              h(Upload, { showUploadList: false }, h(Button, { icon: h(UploadOutlined) }, '上傳檔案'))
-            ),
           ),
 
-          h(Section, { id: 'table', title: 'Table', icon: h(FilterOutlined), desc: '<Table dataSource columns rowSelection pagination />' },
-            h(Table, { size: 'middle', dataSource: tableData, columns: tableColumns, rowSelection: { type: 'checkbox' }, pagination: false })
+          h(Section, { id: 'table', title: 'Table', icon: h(FilterOutlined), desc: 'ProTable — 底層 antd Table；columns rowKey search toolBarRender pagination' },
+            h(ProNote, { name: 'ProTable', imp: "import { ProTable } from '@ant-design/pro-components';\n// <ProTable columns rowKey search toolBarRender pagination />", notes: [
+              ['容器', '表格包在獨立 ProCard；card-body padding 0 24px 16px；不放表格標題'],
+              ['toolbar', 'toolBarRender 新增鈕(primary)置右緊貼 setting icons（reload 重新整理 / column-height 密度 / setting 欄位設定）；欄目 > 8 顯示 setting-items'],
+              ['項次欄', "valueType:'index'（#、寬 56、靠左）；有排序功能時改顯示 handler"],
+              ['操作連結色', '主要/導覽(名稱/編輯/連結)=綠；次級(發點/匯出)=黃；破壞性(刪除)=紅；停用=灰；多操作以「|」分隔、不折行水平列出'],
+              ['複製連結欄', "valueType:'Option' 按鈕「連結」+ anticon-copy（發送客戶用）"],
+              ['狀態欄', '用 Badge（點狀）而非 Tag；下方置 pagination bar'],
+              ['可展開列', "expandable + expandedRowRender：列首 +/− 展開該筆訂單的巢狀明細表（品項 / 數量 / 金額 / 取消時間 / 操作）"]
+            ] }),
+            h(Table, { size: 'middle', dataSource: tableData, columns: tableColumns, pagination: false }),
+            h('div', { style: { fontSize: 13, fontWeight: 600, color: 'rgba(0,0,0,.88)', margin: '24px 0 8px' } }, '可展開列（expandable）— 點 +/− 展開該筆訂單的交易內容（參考交易紀錄頁）'),
+            (function () {
+              var txData = [
+                { key: '1', time: '2026-10-01 14:30:36', changed: '-', amount: 1000, store: 'VIP Cafe', status: '已完成', items: [{ key: 'a', item: '經典拿鐵 x1 / 可頌 x1', qty: 2, amt: 1000, cancel: '-' }] },
+                { key: '2', time: '2026-10-01 13:42:17', changed: '-', amount: 600, store: 'VIP Cafe', status: '已完成', items: [{ key: 'a', item: '美式咖啡 x2', qty: 2, amt: 600, cancel: '-' }] },
+                { key: '3', time: '2026-09-30 09:52:30', changed: '2026-09-30 09:54:22', amount: 2022, store: 'VIP Cafe', status: '已取消', items: [{ key: 'a', item: '起司蛋糕 x1', qty: 1, amt: 2022, cancel: '2026-09-30 09:54:22' }] }
+              ];
+              var txColumns = [
+                { title: '交易時間', dataIndex: 'time', sorter: true, sortOrder: false },
+                { title: '異動時間', dataIndex: 'changed', sorter: true, sortOrder: false },
+                { title: '金額', dataIndex: 'amount', width: 110, render: function (v) { return '$ ' + v.toLocaleString(); } },
+                { title: '門市', dataIndex: 'store', width: 150 },
+                { title: '狀態', dataIndex: 'status', width: 110, render: function (s) { return h(Badge, { status: s === '已完成' ? 'success' : 'default', text: s }); } },
+                { title: '內容', key: 'note', width: 90, render: function () { return h('a', { style: { color: CG } }, '備註'); } }
+              ];
+              var expandedRowRender = function (record) {
+                var cols = [
+                  { title: '品項', dataIndex: 'item' },
+                  { title: '數量', dataIndex: 'qty', width: 90 },
+                  { title: '金額', dataIndex: 'amt', width: 120, render: function (v) { return '$ ' + v.toLocaleString(); } },
+                  { title: '取消時間', dataIndex: 'cancel', width: 180 },
+                  { title: '操作', key: 'op', width: 90, render: function () { return h('a', { style: { color: CRED } }, '取消'); } }
+                ];
+                return h(Table, { columns: cols, dataSource: record.items, pagination: false, size: 'small' });
+              };
+              return h(Table, { size: 'middle', columns: txColumns, dataSource: txData, pagination: false, expandable: { expandedRowRender: expandedRowRender } });
+            })()
           ),
 
-          h(Section, { id: 'tag-badge', title: 'Tag & Badge', icon: h(TagOutlined), desc: '<Tag color="success|processing|error|warning"> · <Badge count status dot>' },
-            h(Demo, { label: 'Tag color presets' },
+          h(Section, { id: 'tag-badge', title: 'Tag & Badge', icon: h(TagOutlined), desc: 'Tag（color preset、不帶 icon，用於 table 與會員詳情的分類標籤）· Badge status（狀態點，用於狀態類資料）（無 pro 對應，直接使用 antd）' },
+            h(Demo, { label: 'Tag — color preset（不帶 icon）' },
               h(Tag, null, 'default'),
-              h(Tag, { color: 'success', icon: h(CheckCircleOutlined) }, 'success'),
+              h(Tag, { color: 'success' }, 'success'),
               h(Tag, { color: 'processing' }, 'processing'),
-              h(Tag, { color: 'error', icon: h(CloseCircleOutlined) }, 'error'),
-              h(Tag, { color: 'warning', icon: h(ExclamationCircleOutlined) }, 'warning'),
+              h(Tag, { color: 'error' }, 'error'),
+              h(Tag, { color: 'warning' }, 'warning'),
             ),
-            h(Demo, { label: 'Contextual — Echoss brand tags' },
-              h(Tag, { color: 'success', icon: h(CrownOutlined) }, 'VIP 會員'),
-              h(Tag, { color: 'processing' }, '進行中'),
-              h(Tag, { color: 'warning', icon: h(ClockCircleOutlined) }, '即將到期'),
-              h(Tag, { color: 'error', icon: h(CloseCircleOutlined) }, '已失效'),
-              h(Tag, null, '銅卡'),
-              h(Tag, null, '銀卡'),
-              h(Tag, { color: 'success', icon: h(CrownOutlined) }, '金卡'),
-              h(Tag, { color: 'processing', icon: h(TrophyOutlined) }, '鑽石卡'),
-            ),
-            h(Demo, { label: 'Closable Tag — closable={true}' },
-              h(Tag, { color: 'success', closable: true }, '金卡'),
-              h(Tag, { color: 'processing', closable: true }, '進行中'),
-              h(Tag, { color: 'warning', closable: true }, '即將到期'),
-            ),
-            h(Demo, { label: 'Badge — count · dot · status' },
-              h(Badge, { count: 5 }, h(Button, null, '通知')),
-              h(Badge, { count: '99+', overflowCount: 99 }, h(Button, null, '待審核')),
-              h(Badge, { dot: true }, h(Button, null, '訊息')),
-              h(Badge, { dot: true, color: '#07C373' }, h(Button, null, '上線')),
-              h(Divider, { type: 'vertical' }),
+            h(Demo, { label: 'Badge — status（狀態類資料）' },
               h(Badge, { status: 'success', text: '啟用中' }),
               h(Badge, { status: 'processing', text: '處理中' }),
               h(Badge, { status: 'error', text: '停用' }),
@@ -1763,7 +2194,12 @@ function App() {
             ),
           ),
 
-          h(Section, { id: 'card', title: 'Card', icon: h(AppstoreOutlined), desc: '<Card title extra actions hoverable>' },
+          h(Section, { id: 'card', title: 'Card', icon: h(AppstoreOutlined), desc: 'antd Card — 資料展示容器（title / extra / cover / actions / Card.Meta / Card.Grid）。目前後台尚未實際使用，保留作未來資料展示之用。（無 pro 對應）' },
+            h('div', { style: { border: '1px solid #91caff', background: '#e6f4ff', borderLeft: '3px solid #1677ff', borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontSize: 13, lineHeight: 1.7 } },
+              h(Text, null, '此處為 ', h(Text, { strong: true }, 'antd Card'), '（資料展示卡）。'),
+              h('br'),
+              h(Text, { type: 'secondary' }, '若要做版面區塊 / panel（篩選卡、表格卡、編輯 panel、詳情卡），請用 '), h(Text, { strong: true, style: { color: CG_ACT } }, 'Framework › Card（ProCard）'), h(Text, { type: 'secondary' }, '，而非這裡的 antd Card。')
+            ),
             h(Row, { gutter: 16 },
               h(Col, { span: 12 },
                 h(Card, { hoverable: true, title: h(Space, null, h(GiftOutlined), '星巴克買一送一券'), extra: h(Tag, { color: 'success' }, '可使用'), actions: [h(Space, { key: 'use' }, h(CheckOutlined), '立即使用'), h(Space, { key: 'view' }, h(EyeOutlined), '查看詳情'), h(EllipsisOutlined, { key: 'more' })] },
@@ -1782,7 +2218,7 @@ function App() {
             )
           ),
 
-          h(Section, { id: 'statistic', title: 'Statistic', icon: h(ArrowUpOutlined), desc: '<Statistic title value prefix suffix />' },
+          h(Section, { id: 'statistic', title: 'Statistic', icon: h(ArrowUpOutlined), desc: '<Statistic title value prefix suffix />（無 pro 對應，直接使用 antd）' },
             h(Row, { gutter: 16 },
               [{ title: '總會員數', value: 12840, suffix: '人', trend: '+8.2%', up: true }, { title: '本月新增', value: 328, suffix: '人', trend: '+12.5%', up: true }, { title: '流失率', value: 2.1, suffix: '%', trend: '-0.3%', up: false }, { title: '本月營收', value: 428600, prefix: 'NT$', trend: '+15.8%', up: true }].map(function(d) {
                 return h(Col, { span: 6, key: d.title },
@@ -1795,25 +2231,41 @@ function App() {
             )
           ),
 
-          h(Section, { id: 'list', title: 'List', icon: h(MenuOutlined), desc: '<List> <List.Item> <List.Item.Meta>' },
+          h(Section, { id: 'list', title: 'List', icon: h(MenuOutlined), desc: 'ProList — 底層 antd List；每列標題＋描述＋右側操作連結' },
+            h(ProNote, { name: 'ProList', imp: "import { ProList } from '@ant-design/pro-components';", notes: [
+              ['資料列表（含操作）', '每列標題＋灰色描述＋右側動作連結（如各等級加碼「設定」）']
+            ] }),
             h(Card, null,
-              h(List, { dataSource: listData, renderItem: function(item) { return h(List.Item, { actions: [h(Button, { key: 'a', type: item.btnType, size: 'small' }, item.btnType === 'primary' ? '續約' : '查看')] }, h(List.Item.Meta, { title: h(Space, null, item.name, item.tag && h(Tag, { color: item.tagColor }, item.tag)), description: h(Space, null, h(ClockCircleOutlined), item.desc) })); } })
+              h(List, { dataSource: listData, renderItem: function(item) { return h(List.Item, { actions: [h(Button, { key: 'a', type: 'link', size: 'small', style: { padding: 0, color: '#07C373' } }, item.btnType === 'primary' ? '續約' : '查看')] }, h(List.Item.Meta, { title: item.name, description: item.desc })); } })
             )
           ),
 
-          h(Section, { id: 'descriptions', title: 'Descriptions', icon: h(FileOutlined), desc: '<Descriptions title bordered column={2} items />' },
-            h(Descriptions, { title: '會員詳細資料', bordered: true, column: 2, items: descItems })
+          h(Section, { id: 'descriptions', title: 'Descriptions', icon: h(FileOutlined), desc: 'ProDescriptions — 卡片容器（標題 + 分隔線），內容為 label｜value 欄位格；desktop 每列 3 欄、mobile 每列 1 欄（非有底色框線的 table 形式）。用於會員詳情等資料檢視頁。' },
+            h(Card, { title: h(Space, null, h(UserOutlined), h(Text, { strong: true, style: { fontSize: 16 } }, '個人資訊')), extra: h(Button, { type: 'link', size: 'small', style: { padding: 0, color: '#07C373' } }, '編輯'), styles: { body: { padding: '16px 24px' } } },
+              h(Row, { gutter: [0, 16] },
+                [
+                  { label: '手機號碼', value: '0912-345-678' },
+                  { label: 'LINE ID', value: 'U29dbefd…35a1' },
+                  { label: '電子信箱', value: 'user@example.com' },
+                  { label: '姓名', value: '王小明' },
+                  { label: '性別', value: '男性' },
+                  { label: '生日', value: '1990-01-01' },
+                  { label: '居住地', value: '台北市' },
+                  { label: '職業', value: '工程師' },
+                  { label: '推薦碼', value: 'ABC123' }
+                ].map(function(it, i) {
+                  return h(Col, { xs: 24, md: 8, key: i },
+                    h('div', { style: { display: 'flex', fontSize: 14, lineHeight: '22px' } },
+                      h('div', { style: { width: 88, color: 'rgba(0,0,0,.45)', paddingRight: 12, borderRight: '1px solid #e8e8e8', flexShrink: 0 } }, it.label),
+                      h('div', { style: { paddingLeft: 12, color: 'rgba(0,0,0,.88)', flex: 1, wordBreak: 'break-all' } }, it.value)
+                    )
+                  );
+                })
+              )
+            )
           ),
 
-          h(Section, { id: 'collapse', title: 'Collapse', icon: h(RightOutlined), desc: '<Collapse items accordion />' },
-            h(Collapse, { accordion: true, activeKey: collapseKeys, onChange: setCollapseKeys, items: collapseItems })
-          ),
-
-          h(Section, { id: 'timeline', title: 'Timeline', icon: h(ClockCircleOutlined), desc: '<Timeline items color />' },
-            h(Timeline, { items: timelineItems })
-          ),
-
-          h(Section, { id: 'progress', title: 'Progress', icon: h(ReloadOutlined), desc: '<Progress percent type="line|circle" status="success|exception|active" />' },
+          h(Section, { id: 'progress', title: 'Progress', icon: h(ReloadOutlined), desc: '<Progress percent type="line|circle" status="success|exception|active" />（無 pro 對應，直接使用 antd）' },
             h(Row, { gutter: 16 },
               h(Col, { span: 14 },
                 h(Card, { title: 'type="line"' },
@@ -1837,7 +2289,7 @@ function App() {
             )
           ),
 
-          h(Section, { id: 'steps', title: 'Steps', icon: h(RightOutlined), desc: '<Steps current items />' },
+          h(Section, { id: 'steps', title: 'Steps', icon: h(RightOutlined), desc: '<Steps current items />（無 pro 對應，直接使用 antd）' },
             h(Card, null,
               h(Steps, { current: currentStep, items: stepsItems }),
               h(Divider),
@@ -1848,7 +2300,7 @@ function App() {
             )
           ),
 
-          h(Section, { id: 'empty-skeleton', title: 'Empty & Skeleton', icon: h(InboxOutlined), desc: '<Empty> · <Skeleton avatar paragraph rows />' },
+          h(Section, { id: 'empty-skeleton', title: 'Empty & Skeleton', icon: h(InboxOutlined), desc: 'ProSkeleton — 底層 antd Skeleton；Empty 無 pro 對應，直接使用 antd' },
             h(Row, { gutter: 16 },
               h(Col, { span: 12 },
                 h(Card, { title: 'Empty' },
@@ -1869,12 +2321,12 @@ function App() {
             )
           ),
 
-          h(Section, { id: 'tabs', title: 'Tabs', icon: h(AppstoreOutlined), desc: '<Tabs type="line|card" items />' },
+          h(Section, { id: 'tabs', title: 'Tabs', icon: h(AppstoreOutlined), desc: '<Tabs type="line|card" items />（無 pro 對應，直接使用 antd）' },
             h(Card, { style: { marginBottom: 16 } }, h(Tabs, { defaultActiveKey: 'all', items: tabItems })),
             h(Card, null, h(Tabs, { type: 'card', defaultActiveKey: 'profile', items: cardTabItems })),
           ),
 
-          h(Section, { id: 'pagination', title: 'Pagination', icon: h(EllipsisOutlined), desc: '<Pagination total current showTotal showSizeChanger showQuickJumper />' },
+          h(Section, { id: 'pagination', title: 'Pagination', icon: h(EllipsisOutlined), desc: '<Pagination total current showTotal showSizeChanger showQuickJumper />（無 pro 對應，直接使用 antd）' },
             h(Card, null,
               h(Space, { direction: 'vertical', size: 16, style: { width: '100%' } },
                 h(Pagination, { defaultCurrent: 1, total: 128, showTotal: function(t) { return '共 ' + t + ' 筆'; } }),
@@ -1883,7 +2335,7 @@ function App() {
             )
           ),
 
-          h(Section, { id: 'breadcrumb', title: 'Breadcrumb', icon: h(RightOutlined), desc: '<Breadcrumb items separator />' },
+          h(Section, { id: 'breadcrumb', title: 'Breadcrumb', icon: h(RightOutlined), desc: '<Breadcrumb items separator />（無 pro 對應，直接使用 antd）' },
             h(Card, null,
               h(Space, { direction: 'vertical', size: 12 },
                 h(Breadcrumb, { items: [{ title: h(Space, null, h(HomeOutlined), '首頁') }, { title: '會員管理' }, { title: '王小明' }] }),
@@ -1892,7 +2344,7 @@ function App() {
             )
           ),
 
-          h(Section, { id: 'alert', title: 'Alert', icon: h(ExclamationCircleOutlined), desc: '<Alert type="success|info|warning|error" showIcon closable description />' },
+          h(Section, { id: 'alert', title: 'Alert', icon: h(ExclamationCircleOutlined), desc: '<Alert type="success|info|warning|error" showIcon closable description />（無 pro 對應，直接使用 antd）' },
             h(Space, { direction: 'vertical', size: 8, style: { width: '100%' } },
               h(Alert, { type: 'success', showIcon: true, message: '升級成功', description: '恭喜！您已成功升級為金卡會員，享有 1.5 倍積點回饋。', closable: true }),
               h(Alert, { type: 'info', showIcon: true, message: '系統維護通知', description: '系統將於 2025/06/01 凌晨 2:00–4:00 進行維護，部分功能暫停使用。', closable: true }),
@@ -1904,65 +2356,53 @@ function App() {
             )
           ),
 
-          h(Section, { id: 'message-notif', title: 'Message & Notification', icon: h(BellOutlined), desc: 'message.success/error/info/warning/loading · notification.open()' },
-            h(Card, { title: 'Global Message', style: { marginBottom: 16 } },
-              h(Space, { wrap: true },
-                h(Button, { icon: h(CheckCircleFilled, { style: { color: '#07C373' } }), onClick: function() { messageApi.success('操作成功，資料已儲存'); } }, 'message.success'),
-                h(Button, { icon: h(CloseCircleFilled, { style: { color: '#FF4D4F' } }), onClick: function() { messageApi.error('操作失敗，請稍後再試'); } }, 'message.error'),
-                h(Button, { icon: h(InfoCircleFilled, { style: { color: '#1A9CFF' } }), onClick: function() { messageApi.info('請確認資料後送出'); } }, 'message.info'),
-                h(Button, { icon: h(ExclamationCircleFilled, { style: { color: '#FCB321' } }), onClick: function() { messageApi.warning('點數餘額不足'); } }, 'message.warning'),
-                h(Button, { icon: h(LoadingOutlined), onClick: function() { var hide = messageApi.loading('上傳中...'); setTimeout(hide, 2000); } }, 'message.loading'),
-              )
-            ),
-            h(Card, { title: 'Notification' },
-              h(Space, { wrap: true },
-                h(Button, { onClick: function() { notifApi.success({ message: '會員升級成功', description: '王小明已成功升級為金卡會員，系統已發送通知簡訊。' }); } }, 'notification.success'),
-                h(Button, { onClick: function() { notifApi.warning({ message: '點數即將到期', description: '共 23 位會員的點數將於本月底到期，建議發送提醒通知。', btn: h(Button, { type: 'primary', size: 'small' }, '立即發送') }); } }, 'notification.warning'),
-                h(Button, { onClick: function() { notifApi.error({ message: '匯出失敗', description: '無法產生報表，請確認資料格式後重試。' }); } }, 'notification.error'),
-              )
-            )
-          ),
-
-          h(Section, { id: 'modal-drawer', title: 'Modal & Drawer', icon: h(FileOutlined), desc: '<Modal> · <Drawer placement="right">' },
+          h(Section, { id: 'modal-drawer', title: 'Modal', icon: h(FileOutlined), desc: 'Form Modal（欄位少於 7 項的新增/編輯）· Modal.confirm（破壞性操作二次確認）（無 pro 對應，直接使用 antd Modal + ProForm）' },
             h(Space, { wrap: true, style: { marginBottom: 16 } },
               h(Button, { type: 'primary', onClick: function() { setModalOpen(true); } }, '開啟 Modal'),
               h(Button, { danger: true, onClick: function() { setConfirmOpen(true); } }, '開啟 Modal.confirm'),
-              h(Button, { onClick: function() { setDrawerOpen(true); } }, '開啟 Drawer'),
             ),
-            h(Modal, { title: '確認停用會員', open: modalOpen, onOk: function() { messageApi.success('已停用'); setModalOpen(false); }, onCancel: function() { setModalOpen(false); }, okText: '確認停用', okButtonProps: { danger: true }, cancelText: '取消' },
-              h(Paragraph, null, '停用後該會員將無法使用 VIP 功能，確定要停用「王小明」嗎？')
+            h(Modal, { title: '新增會員', open: modalOpen, onOk: function() { messageApi.success('已儲存'); setModalOpen(false); }, onCancel: function() { setModalOpen(false); }, okText: '儲存', cancelText: '取消', destroyOnClose: true },
+              h(Form, { layout: 'vertical', style: { marginTop: 8 } },
+                h(Form.Item, { label: '會員姓名', required: true }, h(Input, { placeholder: '請輸入' })),
+                h(Form.Item, { label: '手機號碼', required: true }, h(Input, { placeholder: '請輸入' })),
+                h(Form.Item, { label: '會員等級' }, h(Select, { placeholder: '請選擇', options: [{ value: 'bronze', label: '銅卡' }, { value: 'silver', label: '銀卡' }, { value: 'gold', label: '金卡' }] })),
+                h(Form.Item, { label: '啟用狀態', style: { marginBottom: 0 } }, h(Switch, { defaultChecked: true }))
+              )
             ),
             h(Modal, { title: h(Space, null, h(ExclamationCircleFilled, { style: { color: '#FCB321' } }), '確認刪除此優惠券？'), open: confirmOpen, onOk: function() { messageApi.success('已刪除'); setConfirmOpen(false); }, onCancel: function() { setConfirmOpen(false); }, okText: '確定刪除', okButtonProps: { danger: true }, cancelText: '取消' },
               h(Paragraph, null, '刪除後將無法復原，請確認是否繼續。')
-            ),
-            h(Drawer, { title: h(Space, null, h(UserOutlined), '會員詳情'), placement: 'right', width: 320, open: drawerOpen, onClose: function() { setDrawerOpen(false); } },
-              h(Descriptions, { column: 1, size: 'small', items: [{ key: '1', label: '姓名', children: '王小明' }, { key: '2', label: '等級', children: h(Tag, { color: 'success', icon: h(CrownOutlined) }, '金卡') }, { key: '3', label: '積點', children: h(Text, { strong: true, style: { color: '#07C373' } }, '8,500 點') }] }),
-              h(Divider),
-              h(Space, { direction: 'vertical', style: { width: '100%' } },
-                h(Button, { type: 'primary', block: true, icon: h(EditOutlined) }, '編輯會員'),
-                h(Button, { block: true, icon: h(GiftOutlined) }, '發放優惠券'),
-              )
             )
           ),
 
-          h(Section, { id: 'tooltip', title: 'Tooltip', icon: h(QuestionCircleOutlined), desc: '<Tooltip title placement color> — 懸停查看' },
+          h(Section, { id: 'tooltip', title: 'Tooltip', icon: h(QuestionCircleOutlined), desc: '標題或欄位說明旁的 info icon，懸停顯示補充說明（無 pro 對應，直接使用 antd）' },
             h(Card, null,
-              h(Space, { size: 24, wrap: true },
-                h(Tooltip, { title: '每消費 NT$1 = 1 點，金卡 1.5 倍' }, h(Button, null, '積點規則 ', h(QuestionCircleOutlined))),
-                h(Tooltip, { title: '距升級金卡還差 NT$1,800', color: '#07C373' }, h(Button, { type: 'primary' }, '立即升級')),
-                h(Tooltip, { title: '有效期至 2025/06/01' }, h(Tag, { color: 'warning', icon: h(ClockCircleOutlined) }, '即將到期')),
+              h(Space, { direction: 'vertical', size: 24, style: { width: '100%' } },
+                h('div', null,
+                  h(Text, { type: 'secondary', style: { fontSize: 12, display: 'block', marginBottom: 8 } }, '標題旁 info icon'),
+                  h(Space, { size: 6, align: 'center' },
+                    h(Text, { strong: true, style: { fontSize: 16 } }, '會員點數'),
+                    h(Tooltip, { title: '會員消費累積的可用點數，可折抵消費或兌換好禮。' }, h(InfoCircleOutlined, { style: { color: 'rgba(0,0,0,.45)', cursor: 'help' } }))
+                  )
+                ),
+                h('div', null,
+                  h(Text, { type: 'secondary', style: { fontSize: 12, display: 'block', marginBottom: 8 } }, '文字描述旁 info icon'),
+                  h(Space, { size: 6, align: 'center' },
+                    h(Text, null, '距離下一等級'),
+                    h(Tooltip, { title: '還需消費 NT$1,800 即可升級為金卡會員。' }, h(InfoCircleOutlined, { style: { color: 'rgba(0,0,0,.45)', cursor: 'help' } }))
+                  )
+                )
               )
             )
           ),
 
-          h(Section, { id: 'result', title: 'Result', icon: h(CheckCircleOutlined), desc: '<Result status="success|error|info|warning" title subTitle extra />' },
+          h(Section, { id: 'result', title: 'Result', icon: h(CheckCircleOutlined), desc: '<Result status="success|error|info|warning" title subTitle extra />（無 pro 對應，直接使用 antd）' },
             h(Row, { gutter: 16 },
               h(Col, { span: 12 }, h(Card, null, h(Result, { status: 'success', title: '升級成功！', subTitle: '您已成為金卡會員，享有專屬 1.5 倍積點', extra: [h(Button, { type: 'primary', key: 'v' }, '查看會員權益')] }))),
               h(Col, { span: 12 }, h(Card, null, h(Result, { status: 'error', title: '兌換失敗', subTitle: '點數餘額不足，請累積更多點數後再試', extra: [h(Button, { key: 'b' }, '返回')] }))),
             )
           ),
 
-          h(Section, { id: 'spin', title: 'Spin', icon: h(LoadingOutlined), desc: '<Spin size="small|default|large" tip="載入中...">' },
+          h(Section, { id: 'spin', title: 'Spin', icon: h(LoadingOutlined), desc: '<Spin size="small|default|large" tip="載入中...">（無 pro 對應，直接使用 antd）' },
             h(Card, null,
               h(Space, { size: 40, align: 'center', wrap: true },
                 h(Space, { direction: 'vertical', align: 'center' }, h(Spin, { size: 'small' }), h(Text, { type: 'secondary', style: { fontSize: 12 } }, 'Small')),
@@ -1975,7 +2415,9 @@ function App() {
             )
           ),
 
-          ) // close overview panel
+          ), // close overview panel
+
+          activeTab === 'showcase' && h(Showcase, { section: showcaseSection, view: showcaseView, setView: setShowcaseView })
         )
       )
     )

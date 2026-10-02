@@ -1,17 +1,12 @@
 ---
-name: echoss-vip-design-system
-description: >
-  Echoss VIP 開發團隊 UI 設計系統規範，基於 Ant Design v5 與 @ant-design/pro-components。
-  包含 Design Token、Color Palette、元件使用規範（Button、Tag、Switch、Radio、Form、Table）、
-  應用框架 Layout（ProLayout layout="mix"：Header + Sider 實測參數）、
-  ConfigProvider echossTheme 設定、Claude Prompt 模板。
-  使用時機：任何涉及 Echoss VIP 後台 UI 的 Prototype 製作、Layout 框架、元件選用、前端實作確認。
+name: "echoss-vip-design-system"
+description: "Echoss VIP 開發團隊 UI 設計系統規範（antd v5 + @ant-design/pro-components）：Design Token、色彩、元件規範、ProLayout 應用框架、ConfigProvider、Claude Prompt 模板。任何涉及 Echoss VIP 後台 UI 的 Prototype、Layout、元件選用、前端實作確認時使用。"
 ---
 
 # Echoss VIP Design System — SKILL
 
 > 本文件為 Echoss VIP 開發團隊的 UI 設計系統規範，供 PM、前端工程師、設計師在 Claude 上共用。
-> 維護者：設計端（powchuang）｜最後更新：2026-08-14｜版本：v1.2
+> 維護者：設計端（powchuang）｜最後更新：2026-10-02｜版本：v1.3
 
 ---
 
@@ -142,7 +137,7 @@ description: >
 
 ## 三、元件規範
 
-所有元件基於 **antd v5** 官方元件庫。
+底層為 **antd v5**；版面與表單容器、表格、表單欄位採 **`@ant-design/pro-components`**（ProLayout / PageContainer / ProCard / ProTable / ProForm 系列 / ProList / ProDescriptions）。
 
 ### Button 按鈕
 
@@ -170,14 +165,19 @@ description: >
 | 警示 | `color="warning"` | 即將到期 |
 | 錯誤 | `color="error"` | 已失效、已停用 |
 
+**使用情境：** 分類標籤（color preset，**不帶 icon**），用於 table 欄位與會員詳情等資料檢視。
+
 **⛔ 禁止事項**
-- 狀態一律用 Tag 顯示，不用純文字或背景色塊
+- 「狀態」類資料改用 **Badge（狀態點）**，不用 Tag（見下方 Badge 章節）
+- color preset 的 Tag **不加 icon**
+- 分類不用純文字或背景色塊表示
 
 ---
 
 ### Switch 開關
 
 **正確用法：** 只用於「即時生效的布林值切換」
+- **層級較高的功能啟用與否**（如會員卡模組的集點功能）→ 用 Switch，不用 Radio
 - 通知開關
 - 功能啟用 / 停用
 - 列表中的「啟用」欄：使用 `<Switch size="small" />`
@@ -188,33 +188,51 @@ description: >
 
 ---
 
-### Radio 單選
+### Radio 單選（Radio.Group / Radio.Button）
 
-| 情境 | 用法 |
-|---|---|
-| 2～5 個互斥選項 | `<Radio.Group>` |
-| 超過 5 個 | 改用 `<Select>` |
-| 擇一選值，選中狀態需保留（如時間維度、設定頁選項） | `<Radio.Button>` |
+三者（Radio.Group、Radio.Button、Switch）都是「單選、互斥」；差別在視覺權重與情境。共同前提：2–5 個互斥選項；**超過 5 個改用 `Select`**；多選是 `Checkbox`；都不可用來觸發一次性動作（那是 `Button` / `Button.Group`）。
+
+**Radio.Button（分段按鈕）選中樣式＝ outline：品牌綠文字 + 品牌綠邊框 + 白底（`buttonStyle` 預設 outline）。**
+
+**Radio.Button — 使用時機**
+1. **層級次高的設定項目**（選定後其餘表單內容會隨之改變），如票券類型「商品券 / 餘額券 / 優惠券」（一經儲存即無法變更）。
+2. 2–5 互斥選項的類型切換、**且選擇後會展開額外欄位**時，如「僅一次 / 不限次數 / 指定次數」「不指定 / 指定門市 / 指定門市群組」（可於儲存後再變更）。在 form 內，第一列 Radio.Button 與展開內容的間距與一般欄位一致為 **24px**。
+3. 「因應某結果可設定 **是／否 觸發下一動作**」，如「當會員卡升等時，是／否 發送升等禮」「當票券到期時，是否發送 LINE 通知」；格式為「標題＝當＊＊＊時、內容＝是／否 發送＊＊＊」。
+
+**Radio.Button — 不使用時機**
+- 選項超過 5 項 → 改用 `Select`。
+- 層級較高的功能啟用與否（如集點功能）→ 用 `Switch`。
+
+**Radio.Group（原生圈）— 使用時機**
+1. 2–5 互斥選項的類型切換、**且選擇後不會展開額外欄位**，如「發放生日禮：生日當月 1 號 / 生日當天」等簡單、不顯眼的設定。
+2. 選項僅 **是 / 否**、且標題已詳述功能、內容無需補充，如「轉贈給好友：是 / 否」。
 
 **⛔ 禁止事項**
-- `Radio.Button` 用於**擇一選值**的情境，選中狀態會保留。不可用於觸發一次性動作（那是 `Button` 或 `Button.Group` 的職責）
+- Radio.Button 選中態一律 outline；後台既有的實心綠底白字（`buttonStyle:"solid"`）為**待汰換的舊樣式**，新開發一律 outline。
+- Radio.Button 不可用於觸發一次性動作（那是 `Button` / `Button.Group` 的職責）。
 
 ---
 
-### Form 表單
+### Form 表單（ProForm，horizontal）
 
-- 預設布局：`layout="horizontal"`
-- 標籤寬度：`labelCol={{ span: 6 }}`
-- 欄位寬度：`wrapperCol={{ span: 18 }}`
-- 送出按鈕對齊：`wrapperCol={{ offset: 6, span: 18 }}`
+- 布局：`layout="horizontal"`。
+- 內容頁 form-item 標準（詳見 §4.7）：label **固定寬 188px、右對齊、無冒號、必填紅星 `*` 在前**；控件高 32px；**每列在 32px 高的列帶內，單行控件垂直置中對齊 label**。
+- 間距：form-item `margin-bottom 24px`；**多列欄位的內部列、以及 Radio.Button 選後展開的內容，亦一律 24px**。
+- 動作列：**panel 本身不放按鈕；整頁共用一組「取消 / 儲存」置於所有 panel 之外、容器左下角**（見 §4.7）。
 
 ---
 
 ### Table 表格
 
-- **項次欄（#）：** **所有列表 table 最左側都必須有項次欄。** 使用 ProTable 欄位 `valueType: 'index'`（顯示 1、2、3…列序）。實測參數：標題文字 `#`、欄寬 `36`、靠左（`align: 'left'`／`text-align: start`）、表頭與儲存格 padding `12px 8px`；表頭底色 `#fafafa`、字重 600、色 `rgba(0,0,0,.88)`、底線 `1px #f0f0f0`。**放在所有欄位之前。**
+- **項次欄（#）：** **所有列表 table 最左側都必須有項次欄。** 使用 ProTable 欄位 `valueType: 'index'`（顯示 1、2、3…列序）。標題文字 `#`、欄寬 `56`、靠左（`align: 'left'`／`text-align: start`）、表頭與儲存格 padding `12px 8px`；表頭底色 `#fafafa`、字重 600、色 `rgba(0,0,0,.88)`、底線 `1px #f0f0f0`。**放在所有欄位之前。**
 - **啟用欄：** 使用 `<Switch size="small" />`，即時反映啟用狀態
-- **操作欄：** 依「操作連結 taxonomy」決定顏色，見下方規範
+- **操作欄：** 依「操作連結 taxonomy」決定顏色（見下方）；按鈕**不加 icon、不折行水平列出、以 `|` 分隔**。
+- **狀態欄：** 「狀態」類資料用 **Badge（狀態點）**（success/processing/error/warning/default），不用 Tag。
+- **分類標籤欄：** 用 Tag（color preset、**不帶 icon**）。
+- **複製連結欄：** 需複製連結發送給客戶時，用 `valueType:'Option'` 呈現「連結」按鈕 + `anticon-copy`（品牌綠、不折行）。
+- **欄寬：** 以資料最大字元完整呈現（如 `yyyy-mm-dd hh:mm:ss` 約 174px），max-width 200px，超長以 `…` 縮減；全欄目超過 100% 可視寬度則水平滾動。
+- **不放表格標題；** toolbar（`toolBarRender`）主要動作鈕（primary）置右、緊貼工具 icon（重新整理 / 密度 / 欄位設定），欄目 > 8 時顯示欄位設定工具；下方置 pagination。
+- **可展開列（expandable）：** 需查看單筆主檔的明細（如交易紀錄的訂單 → 交易內容）時，用 `expandable` + `expandedRowRender`；列首以 `+ / −` 展開或收起巢狀明細表（例：品項 / 數量 / 金額 / 取消時間 / 操作）。
 
 #### 操作連結 taxonomy（列表內文字連結）
 
@@ -240,6 +258,8 @@ description: >
 
 ### Badge 徽章
 
+**「狀態」類資料一律用 Badge（狀態點）呈現，不用 Tag。**
+
 | 狀態 | API | 用途 |
 |---|---|---|
 | `success` | `status="success"` | 啟用中 |
@@ -257,13 +277,24 @@ description: >
 | 啟用/停用功能 | Radio 選「啟用」「停用」 | Switch 元件 |
 | 頁面主要操作 | Radio.Button 樣式（無選中語意） | Button Primary |
 | 多選一（會員等級） | Switch 輪流切換 | Radio Group |
-| 狀態顯示 | 純文字 | Tag 元件 |
+| Radio.Button 選中樣式 | 實心綠底白字(solid) | outline（綠字綠框白底） |
+| 狀態顯示 | 純文字 / Tag | Badge（狀態點） |
 
 ---
 
 ## 四、應用框架 Layout（ProLayout）
 
 後台整體框架使用 **`@ant-design/pro-components` 的 `ProLayout`**，佈局類型為 **`layout="mix"`**。以下數值皆自 stage 後台 `/permission/account` 實測後鎖定。完整可貼的 HTML 骨架見 **`references/layout-shell.html`**。
+
+### 4.0 版面三層（Layout ⊃ Container ⊃ Card）
+
+後台版面為巢狀三層，皆來自 `@ant-design/pro-components`：
+
+- **Layout＝`ProLayout`**（`layout="mix"`）：全站外框（Header + Sider + Content），每頁共用。
+- **Container＝`PageContainer`**：單頁的殼與頁首（breadcrumb → 標題 20/600 →（列表頁才有）tabs → 內容）。
+- **Card＝`ProCard`**（高级卡片）：頁面內的內容區塊 / panel，可 `split` 分割、`gutter` 柵格、巢狀、內嵌 tabs、collapsible。後台所有白底區塊（篩選卡、表格卡、編輯 panel、詳情卡）都是 ProCard。
+
+> **ProCard ≠ antd Card：** antd `Card` 是單純的資料展示容器（title / extra / cover / actions / Meta / Grid）；版面區塊 / panel 一律用 **ProCard**。
 
 ### 4.1 結構判定（mix）
 
@@ -420,6 +451,12 @@ body { background: linear-gradient(#ffffff, #f5f5f5 28%) fixed; }
 - **ProTable 工具列（`toolBarRender`）**：主要動作鈕（如「新增資料／新增票券」，Button `type="primary"`）置於工具列**右側、緊貼**設定 icon 群（`⟳` 重新整理 / `☰` 密度 / `⚙` 欄位設定）——即實測後台 `.ant-pro-table-list-toolbar-right` 內、`setting-items` 之前的順序。
 - 表格最左側為**項次欄**（見§三 Table）。
 
+**篩選區（QueryFilter）**
+- 篩選欄位固定 **`col-6`**（一列 3 個輸入欄 + 按鈕欄）；`清除 / 搜尋` 置最右欄且靠右。
+- 欄位超過一列時，於按鈕右側顯示 **`進階搜尋 / 基本搜尋`** 操作鈕，預設收起、展開才顯示後續欄位。
+- 篩選欄位超過 6 個 → 改以 **form modal** 承載。
+- 功能單純、無需分頁時不引入 Tabs。
+
 ### 4.7 內容頁 Layout（新增／編輯頁）
 
 第三層新增／編輯內容頁：`PageContainer`（breadcrumb 三層 + 標題，**無 tabs**）→ 一或多個**獨立 Panel** → 頁尾 Copyright。
@@ -434,13 +471,14 @@ body { background: linear-gradient(#ffffff, #f5f5f5 28%) fixed; }
 **表單（ProForm，horizontal）**
 
 - 每個欄位一律用 **form-item 格式**：左側 label（固定寬、右對齊、無冒號、必填紅星 `*` `#FF4D4F` 在前）＋右側控件。**區塊內所有標題與內容都要用 form-item 格式，不可把欄位名做成 bold 區塊標題。**
-- 設計系統標準 label 欄寬 **`188px`**；控件高 `32px`；欄距 `margin-bottom 24px`；輔助說明 `rgba(0,0,0,.45)` `14px`。
+- 設計系統標準 label 欄寬 **`188px`**（右對齊、無冒號、必填紅星在前）；控件高 `32px`；欄距 `margin-bottom 24px`。
+- **每列在 32px 高的列帶內，單行控件（input/select/radio/switch）垂直置中對齊 label**；多列欄位的內部列、以及 Radio.Button 選後展開的內容，間距一律 `24px`。
 - （若採「欄位標題＝元件名」的參考版，label 較長可加寬至約 `210px`，見 §4.8。）
 
 **動作列（取消／儲存）**
 
-- **每個 panel 各自擁有一組 `取消`（default）＋`儲存`（primary）動作列，置於該 panel body 的左下角**（靠 panel 左緣對齊，`margin-left:0`）。
-- ⚠️ 不使用整頁共用的單一底部動作列。
+- **panel 本身不放按鈕；** 整頁共用一組 `取消`（default）＋`儲存`（primary）動作列，置於**所有 panel 之外、容器的左下角**（參考 `survey/create`），一次儲存所有 panel 內容。
+- ⚠️（v1.3 修正）先前「每個 panel 各自左下角動作列」已改為上述「共用、置於 panel 之外」。
 
 ### 4.8 欄位元件命名對照（@ant-design/pro-components）
 
@@ -451,12 +489,15 @@ body { background: linear-gradient(#ffffff, #f5f5f5 28%) fixed; }
 | 文字輸入 | `ProFormText` | |
 | 數字輸入 | `ProFormDigit` | |
 | 下拉選單 | `ProFormSelect` | |
-| 單選（按鈕群） | `ProFormRadio.Group` | `optionType: button`（選中＝品牌綠底白字） |
+| 多選（標籤等） | `ProFormSelect` | `mode="multiple"`（selector-multiple） |
+| 單選（按鈕群） | `ProFormRadio.Group` | `optionType: button`；選中＝**outline（品牌綠字＋綠框＋白底）** |
 | 單選（原生圈） | `ProFormRadio.Group` | |
 | 日期 | `ProFormDatePicker` | |
 | 日期區間 | `ProFormDateRangePicker` | |
 | 上傳 | `ProFormUploadButton` | |
-| 富文本 | `ProForm.Item` | 內層為 **ReactQuill（Quill `snow` 主題）**；pro 無官方富文本元件，實測後台即 react-quill |
+| 富文本 | `ProForm.Item` | 內層為 **ReactQuill（Quill `snow` 主題）**；pro 無官方富文本元件 |
+| 上傳（圖片） | `ProFormUploadButton` | `listType="picture-card"`、縮圖 104×104、欄位帶 tooltip；含未上傳（虛線＋上傳）/已上傳（縮圖＋hover 預覽/刪除）兩態 |
+| 資料檢視 | `ProDescriptions` | **卡片容器**（標題 + 編輯連結 + 分隔線），內容為 label｜value 欄位格、desktop 每列 3 欄 / mobile 每列 1 欄；**非有底色框線的 table 形式** |
 | 可增刪列表組合 | `ProFormList` | item 內含 `ProFormText`／`ProFormDigit`；例：儲值面額（面額＋標籤（選填）＋顯示/隱藏 eye icon＋刪除 icon＋「新增」dashed 鈕） |
 | 固定分組欄位 | `ProForm.Group` | 各等級固定、單一條件的組合型（降階版 ProList）；item 為 `ProFormDigit`；例：發點規則（各等級「消費滿 X 元獲得一點」） |
 | 資料列表（含操作） | `ProList` | 每列標題＋灰色描述＋右側動作連結（如「設定」）；例：各等級加碼設定 |
@@ -550,9 +591,9 @@ PM 在 Claude.ai 開新對話時，將以下內容**整段複製**貼在第一�
 【列表頁 / 內容頁 Layout（PageContainer）】
 - 頁面以 PageContainer 包裹：breadcrumb（在上）→ 標題 20/600 →（列表頁才有）tabs → 內容；header padding 8/40/16
 - Breadcrumb 三層：功能模組 /（模組名）/（動作名，如 新增票券）；祖節點 rgba(0,0,0,.45)、當前節點 rgba(0,0,0,.88)、分隔線 / 為 rgba(0,0,0,.45)
-- 列表頁：篩選 card + 表格 card 各自獨立；表格包在 card 內、card body padding 0 24 16；ProTable toolBarRender 的新增鈕（primary）置右、緊貼工具 icon（重新整理/密度/欄位設定）
-- 內容頁：每個區塊為獨立 ProCard（bordered + 標題，panel-body padding 16 24）；欄位一律 form-item 格式（label 左 188、右對齊、必填紅星在前）；**每個 panel 各有自己的「取消/儲存」動作列於左下角**，不用整頁單一動作列
-- 內容頁欄位標題直接寫對應的 @ant-design/pro-components 元件名（可複製呼叫）：ProFormText / ProFormDigit / ProFormSelect / ProFormRadio.Group（button 或原生）/ ProFormDatePicker / ProFormDateRangePicker / ProFormUploadButton / ProForm.Item（ReactQuill 富文本）/ ProFormList（可增刪列表）/ ProForm.Group（各等級固定分組）/ ProList（資料列表含操作）
+- 列表頁：篩選 card + 表格 card 各自獨立；篩選用 QueryFilter（col-6，一列 3 欄+按鈕欄；清除/搜尋置最右欄靠右；超過一列用「進階搜尋/基本搜尋」收合；>6 欄改 form modal）；表格包在 card 內、card body padding 0 24 16；ProTable toolBarRender 的新增鈕（primary）置右、緊貼工具 icon（重新整理/密度/欄位設定）；需查看單筆明細時用 expandable（列首 +/− 展開巢狀明細表）
+- 內容頁：每個區塊為獨立 ProCard（bordered + 標題，panel-body padding 16 24）；欄位一律 form-item 格式（label 左 188、右對齊、必填紅星在前、控件高 32、每列 32px 列帶內單行控件垂直置中、form-item 間距 24、多列內部列與 Radio.Button 展開內容亦 24）；**panel 本身不放按鈕，整頁共用一組「取消/儲存」置於所有 panel 之外、容器左下角**
+- 內容頁欄位標題直接寫對應的 @ant-design/pro-components 元件名（可複製呼叫）：ProFormText / ProFormDigit / ProFormSelect / ProFormRadio.Group（button 或原生）/ ProFormDatePicker / ProFormDateRangePicker / ProFormUploadButton / ProForm.Item（ReactQuill 富文本）/ ProFormList（可增刪列表）/ ProForm.Group（各等級固定分組）/ ProList（資料列表含操作）/ ProDescriptions（資料檢視：卡片容器、標題+分隔線、desktop 3 欄/mobile 1 欄的 label｜value，非 bordered table）
 
 【品牌色碼（必須使用）】
 - Primary: #07C373（品牌綠）
@@ -570,23 +611,51 @@ PM 在 Claude.ai 開新對話時，將以下內容**整段複製**貼在第一�
 - Button Danger → 破壞性操作（刪除）
 - Switch → 只用於即時布林切換，不代替 Radio
 - Radio → 2–5 個互斥選項；超過 5 個用 Select
-- Radio.Button → 擇一選值且選中狀態需保留（如時間維度、設定頁選項）；不可用於觸發一次性動作
-- Tag → success=正向、processing=進行中、warning=警示、error=錯誤/失效
+- Radio.Button → 擇一選值且選中狀態需保留；選中態 outline（品牌綠字＋綠框＋白底），後台既有 solid 實心為待汰換舊樣式；在 form 內選後展開欄位時，展開內容與一般欄位間距一律 24px；不可用於觸發一次性動作
+- Tag → 分類標籤（color preset、**不帶 icon**）：success=正向、processing=進行中、warning=警示、error=錯誤/失效；「狀態」類資料改用 Badge（狀態點），不用 Tag
 - Form → layout="horizontal"，labelCol={{ span: 6 }}，wrapperCol={{ span: 18 }}
-- Table 項次欄 → 所有列表 table 最左側都要有項次欄（ProTable valueType="index"，標題 #、寬 36、靠左）
+- Table 項次欄 → 所有列表 table 最左側都要有項次欄（ProTable valueType="index"，標題 #、寬 56、靠左；有排序功能時改顯示 handler）
 - Table 啟用欄 → Switch size="small"
-- Table 操作欄 → 依操作連結 taxonomy 上色：主要/導覽（編輯、詳情、內容連結）=品牌綠 #07C373；次級動作（新增、匯入、匯出、產生）=品牌黃 #FCB321；破壞性（刪除、作廢、撤銷）=品牌紅 #FF4D4F；停用=灰階不可點 #8c8c8c。列表內連結預設品牌綠、不用藍色；多個操作以「|」分隔。個別模組語意特殊的操作依實際語意歸類（如序號模組「收回」為可還原動作，歸次級=黃）
+- Table 狀態欄 → 用 Badge（狀態點），不用 Tag
+- Table 操作欄 → 依操作連結 taxonomy 上色：主要/導覽（編輯、詳情、內容連結）=品牌綠 #07C373；次級動作（新增、匯入、匯出、產生）=品牌黃 #FCB321；破壞性（刪除、作廢、撤銷）=品牌紅 #FF4D4F；停用=灰階不可點 #8c8c8c。按鈕**不加 icon、不折行水平列出、以「|」分隔**；列表內連結預設品牌綠、不用藍色。個別模組語意特殊的操作依實際語意歸類（如序號模組「收回」為可還原動作，歸次級=黃）
 
 【輸出要求】
 - 使用 antd v5 + @ant-design/pro-components 官方元件
 - 套用 ConfigProvider + echossTheme
 - 字型使用 Noto Sans TC
-- 狀態顯示一律用 Tag 元件，不用純文字
+- 狀態類資料一律用 Badge（狀態點），不用純文字或 Tag；分類標籤用 Tag（color preset、不帶 icon）
 ```
 
 ---
 
 ## 七、版本紀錄
+
+### v1.3 — 2026-10-02
+
+> 整合 Component / 應用案例（Use Cases）校準成果，全數定案為單一標準（無「實測 vs 規範」待決差異）。
+
+**色彩（定案）**
+- Primary 綠 `#07C373`、次級 gold `#FCB321`、Error 紅 `#FF4D4F` 為唯一標準（後台若有 #05B34D / #FAAD14 等差異為待校正，非標準值）。
+
+**元件規範調整**
+- Radio：新增 Radio.Button / Radio.Group / Switch 完整使用時機；**Radio.Button 選中態一律 outline（綠字綠框白底）**，實心綠底（solid）列為待汰換舊樣式。
+- 「狀態」類資料一律用 **Badge（狀態點）**，不用 Tag（修正舊規範）；分類 Tag 一律 **不帶 icon**。
+- Table：操作欄不加 icon、不折行、以「|」分隔並依 taxonomy 四色；項次欄寬 36→**56**；新增「狀態欄用 Badge」「複製連結欄 valueType:'Option'」「欄寬/水平滾動」「**可展開列 expandable**（列首 +/− 展開巢狀明細表）」。
+- Switch：補「層級較高功能啟用與否用 Switch」。
+
+**版面 / 內容頁 Layout 調整**
+- 新增 §4.0 版面三層：Layout（ProLayout）⊃ Container（PageContainer）⊃ Card（ProCard）；並區分 ProCard（版面容器）與 antd Card（資料展示）。
+- §4.6 新增 QueryFilter 規則（col-6、進階搜尋/基本搜尋收合、>6 欄改 form modal）。
+- §4.7 **動作列改為「panel 不放按鈕、整頁共用一組取消/儲存置於 panel 之外、容器左下角」**（取代舊版「每 panel 各自動作列」）；form-item 明確為 margin-bottom 24、label 188 右對齊、每列 32px 列帶內單行控件垂直置中，Radio.Button 選後展開內容間距亦 24。
+- §4.8 新增 ProFormSelect `mode="multiple"`、ProFormUploadButton picture-card（104×104、兩態）、**ProDescriptions（卡片容器、desktop 3 欄/mobile 1 欄，非 bordered table）**；Radio.Button 註記改 outline。
+
+**同步更新** Claude Prompt 模板（Radio.Button outline、狀態 Badge、Tag 不帶 icon、QueryFilter、共用動作列、expandable、ProDescriptions）。
+
+**驗證：** 以 Claude in Chrome 讀取 stage 後台 `promotional/points`、`member_cards/card/update`、`marketing/create`、`audience/create`、`survey/create`、`member/info/*`（memberDetails / paymentHistory）DOM 與 computed style 校準。
+
+**貢獻者：** powchuang（設計端）
+
+---
 
 ### v1.2 — 2026-08-14
 
